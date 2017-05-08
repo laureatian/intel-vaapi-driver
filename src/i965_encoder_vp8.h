@@ -234,11 +234,14 @@ struct vp8_brc_init_reset_curbe_data {
 
     struct {
         uint32_t num_t_levels: 8;
-        uint32_t reserved: 24;
+        uint32_t initbck_maxlevel_ratio_u8_layer0: 8;
+        uint32_t initbck_maxlevel_ratio_u8_layer1: 8;
+        uint32_t initbck_maxlevel_ratio_u8_layer2: 8;
     } dw24;
 
     struct {
-        uint32_t reserved;
+        uint32_t initbck_maxlevel_ratio_u8_layer3: 8;
+        uint32_t reserved: 24;
     } dw25;
 
     struct {
@@ -2529,12 +2532,12 @@ struct i965_encoder_vp8_context {
     unsigned short avbr_accuracy;
     unsigned short avbr_convergence;
     unsigned int frame_num;
-    struct intel_fraction framerate;
+    struct intel_fraction framerate[MAX_TEMPORAL_LAYERS];
     unsigned int gop_size;
     unsigned int brc_init_reset_buf_size_in_bits;
-    unsigned int target_bit_rate;
-    unsigned int max_bit_rate;
-    unsigned int min_bit_rate;
+    unsigned int target_bit_rate[MAX_TEMPORAL_LAYERS];
+    unsigned int max_bit_rate[MAX_TEMPORAL_LAYERS];
+    unsigned int min_bit_rate[MAX_TEMPORAL_LAYERS];
     unsigned long init_vbv_buffer_fullness_in_bit;
     unsigned long vbv_buffer_size_in_bit;
     double brc_init_current_target_buf_full_in_bits;

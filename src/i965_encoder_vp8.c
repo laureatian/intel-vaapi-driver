@@ -2257,36 +2257,41 @@ i965_encoder_vp8_get_misc_parameters(VADriverContextP ctx,
                                      struct intel_encoder_context *encoder_context)
 {
     struct i965_encoder_vp8_context *vp8_context = encoder_context->vme_context;
+    int i;
 
     if (vp8_context->internal_rate_mode == I965_BRC_CQP) {
         vp8_context->init_vbv_buffer_fullness_in_bit = 0;
         vp8_context->vbv_buffer_size_in_bit = 0;
-        vp8_context->target_bit_rate = 0;
-        vp8_context->max_bit_rate = 0;
-        vp8_context->min_bit_rate = 0;
+        for (i = 0; i < encoder_context->layer.num_layers; i++) {
+            vp8_context->vbv_buffer_size_in_bit = 0;
+            vp8_context->target_bit_rate[i] = 0;
+            vp8_context->max_bit_rate[i] = 0;
+            vp8_context->min_bit_rate[i] = 0;
+        }
         vp8_context->brc_need_reset = 0;
     } else {
         vp8_context->gop_size = encoder_context->brc.gop_size;
-
         if (encoder_context->brc.need_reset) {
-            vp8_context->framerate = encoder_context->brc.framerate[0];
             vp8_context->vbv_buffer_size_in_bit = encoder_context->brc.hrd_buffer_size;
             vp8_context->init_vbv_buffer_fullness_in_bit = encoder_context->brc.hrd_initial_buffer_fullness;
-            vp8_context->max_bit_rate = encoder_context->brc.bits_per_second[0]; // currently only one layer is supported
-            vp8_context->brc_need_reset = (vp8_context->brc_initted && encoder_context->brc.need_reset);
+            for (i = 0; i < encoder_context->layer.num_layers; i++) {
+                vp8_context->framerate[i] = encoder_context->brc.framerate[i];
+                vp8_context->max_bit_rate[i] = encoder_context->brc.bits_per_second[i]; // currently only one layer is supported
+                vp8_context->brc_need_reset = (vp8_context->brc_initted && encoder_context->brc.need_reset);
 
-            if (vp8_context->internal_rate_mode == I965_BRC_CBR) {
-                vp8_context->min_bit_rate = vp8_context->max_bit_rate;
-                vp8_context->target_bit_rate = vp8_context->max_bit_rate;
-            } else {
-                assert(vp8_context->internal_rate_mode == I965_BRC_VBR);
+                if (vp8_context->internal_rate_mode == I965_BRC_CBR) {
+                    vp8_context->min_bit_rate[i] = vp8_context->max_bit_rate[i];
+                    vp8_context->target_bit_rate[i] = vp8_context->max_bit_rate[i];
+                } else {
+                    assert(vp8_context->internal_rate_mode == I965_BRC_VBR);
 
-                if (encoder_context->brc.target_percentage[0] <= 50)
-                    vp8_context->min_bit_rate = 0;
-                else
-                    vp8_context->min_bit_rate = vp8_context->max_bit_rate * (2 * encoder_context->brc.target_percentage[0] - 100) / 100;
+                    if (encoder_context->brc.target_percentage[i] <= 50)
+                        vp8_context->min_bit_rate[i] = 0;
+                    else
+                        vp8_context->min_bit_rate[i] = vp8_context->max_bit_rate[i] * (2 * encoder_context->brc.target_percentage[i] - 100) / 100;
 
-                vp8_context->target_bit_rate = vp8_context->max_bit_rate * encoder_context->brc.target_percentage[0] / 100;
+                    vp8_context->target_bit_rate[i] = vp8_context->max_bit_rate[i] * encoder_context->brc.target_percentage[i] / 100;
+                }
             }
         }
     }
@@ -2408,7 +2413,11 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     VAEncPictureParameterBufferVP8 *pic_param = (VAEncPictureParameterBufferVP8 *)encode_state->pic_param_ext->buffer;
     struct vp8_brc_init_reset_curbe_data *pcmd = i965_gpe_context_map_curbe(gpe_context);
     double input_bits_per_frame, bps_ratio;
+    int temporal_id = 0;
+    int num_layers = 1;
 
+    temporal_id = encoder_context->layer.curr_frame_layer_id;
+    num_layers = encoder_context->layer.num_layers;
     if (!pcmd)
         return;
 
@@ -2417,10 +2426,10 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     pcmd->dw0.profile_level_max_frame = vp8_context->frame_width * vp8_context->frame_height;
     pcmd->dw1.init_buf_full_in_bits = vp8_context->init_vbv_buffer_fullness_in_bit;
     pcmd->dw2.buf_size_in_bits = vp8_context->vbv_buffer_size_in_bit;
-    pcmd->dw3.average_bitrate = (vp8_context->target_bit_rate + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
-    pcmd->dw4.max_bitrate = (vp8_context->max_bit_rate + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
-    pcmd->dw6.frame_rate_m = vp8_context->framerate.num;
-    pcmd->dw7.frame_rate_d = vp8_context->framerate.den;
+    pcmd->dw3.average_bitrate = (vp8_context->target_bit_rate[num_layers - 1] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
+    pcmd->dw4.max_bitrate = (vp8_context->max_bit_rate[temporal_id] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
+    pcmd->dw6.frame_rate_m = vp8_context->framerate[num_layers - 1].num;
+    pcmd->dw7.frame_rate_d = vp8_context->framerate[num_layers - 1].den;
     pcmd->dw8.brc_flag = 0;
     pcmd->dw8.gop_minus1 = vp8_context->gop_size - 1;
 
@@ -2509,9 +2518,22 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     pcmd->dw23.deviation_threshold_7_for_i = (unsigned int)(50 * pow(0.9, bps_ratio));
 
     // Default: 1
-    pcmd->dw24.num_t_levels = 1;
-
-    if (!vp8_context->brc_initted) {
+    pcmd->dw24.num_t_levels = num_layers;
+    if (num_layers > 1) {
+        unsigned int temp_bit_rate[MAX_TEMPORAL_LAYERS];
+        if (!i965_CalMaxLevelRatioForTL_g8lp(vp8_context->framerate, vp8_context->target_bit_rate, num_layers - 1, temp_bit_rate)) {
+            pcmd->dw24.initbck_maxlevel_ratio_u8_layer0 = (unsigned int) temp_bit_rate[0];
+            pcmd->dw24.initbck_maxlevel_ratio_u8_layer1 = (unsigned int) temp_bit_rate[1];
+            pcmd->dw24.initbck_maxlevel_ratio_u8_layer2 = (unsigned int) temp_bit_rate[2];
+            pcmd->dw25.initbck_maxlevel_ratio_u8_layer3 = (unsigned int) temp_bit_rate[3];
+        }
+    } else {
+        pcmd->dw24.initbck_maxlevel_ratio_u8_layer0 = 0;
+        pcmd->dw24.initbck_maxlevel_ratio_u8_layer1 = 0;
+        pcmd->dw24.initbck_maxlevel_ratio_u8_layer2 = 0;
+        pcmd->dw25.initbck_maxlevel_ratio_u8_layer3 = 0;
+    }
+    if (vp8_context->brc_initted) {
         vp8_context->brc_init_current_target_buf_full_in_bits = pcmd->dw1.init_buf_full_in_bits;
     }
 
@@ -3203,12 +3225,12 @@ i965_encoder_vp8_vme_mbenc_set_i_frame_curbe(VADriverContextP ctx,
     if (segmentation_enabled) {
         QUANT_INDEX(uv_quanta_ac_idx, 1, 2);
         pcmd->dw8.chroma_ac_de_quant_segment1 = quant_ac_vp8[uv_quanta_ac_idx];
-        pcmd->dw10.chroma_ac0_threshold0_segment0 = (unsigned short)((((((1) << 16) -
+        pcmd->dw11.chroma_ac0_threshold0_segment1 = (unsigned short)((((((1) << 16) -
                                                                         1) * 1.0 / ((1 << 16) /
                                                                                     quant_ac_vp8[uv_quanta_ac_idx]) -
                                                                        ((48 * quant_ac_vp8[uv_quanta_ac_idx]) >> 7)) *
                                                                       (1 << 13) + 3400) / 2217.0);
-        pcmd->dw10.chroma_ac0_threshold1_segment0 = (unsigned short)((((((2) << 16) -
+        pcmd->dw11.chroma_ac0_threshold1_segment1 = (unsigned short)((((((2) << 16) -
                                                                         1) * 1.0 / ((1 << 16) /
                                                                                     quant_ac_vp8[uv_quanta_ac_idx]) -
                                                                        ((48 * quant_ac_vp8[uv_quanta_ac_idx]) >> 7)) *
@@ -3358,6 +3380,11 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
     unsigned int segmentation_enabled = pic_param->pic_flags.bits.segmentation_enabled;
     unsigned short qp_seg0, qp_seg1, qp_seg2, qp_seg3;
     unsigned char me_method = (encoder_context->quality_level == ENCODER_DEFAULT_QUALITY) ? 6 : 4;
+    int temporal_id = 0;
+    int num_layers = 1;
+
+    temporal_id = encoder_context->layer.curr_frame_layer_id;
+    num_layers = encoder_context->layer.num_layers;
 
     if (!pcmd)
         return;
@@ -3383,7 +3410,30 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
     pcmd->dw1.enable_segmentation_info_update = 1;
     pcmd->dw1.multi_reference_qp_check = 0;
     pcmd->dw1.mode_cost_enable_flag = 1;
-    pcmd->dw1.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
+
+    pcmd->dw1.main_ref = 0;
+    if (num_layers > 1) {
+        unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
+        unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
+        unsigned int ref_frame_ctrl = vp8_context->ref_frame_ctrl;
+        unsigned char m_rfo[3];
+        unsigned int main_ref = 0;
+        unsigned int k = 0;
+        unsigned int i;
+
+        m_rfo[2] = first_ref;
+        m_rfo[1] = second_ref;
+        m_rfo[0] = 6 - m_rfo[2] - m_rfo[1];
+        for (i = 0; i < 3; i++) {
+            if (vp8_context->ref_frame_ctrl & (0x1 << (m_rfo[i] - 1))) {
+                main_ref |= (m_rfo[i] << (2 * k));
+                k++;
+            }
+        }
+        pcmd->dw1.main_ref = main_ref;
+    } else {
+        pcmd->dw1.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
+    }
 
     pcmd->dw2.lambda_intra_segment0 = quant_dc_vp8[qp_seg0];
     pcmd->dw2.lambda_inter_segment0 = (quant_dc_vp8[qp_seg0] >> 2);
@@ -3404,7 +3454,7 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
 
     pcmd->dw7.raw_dist_threshold = (encoder_context->quality_level == ENCODER_DEFAULT_QUALITY) ? 50 :
                                    ((encoder_context->quality_level == ENCODER_LOW_QUALITY) ? 0 : 100);
-    pcmd->dw7.temporal_layer_id = 0;
+    pcmd->dw7.temporal_layer_id = temporal_id;
 
     pcmd->dw8.early_ime_successful_stop_threshold = 0;
     pcmd->dw8.adaptive_search_enable = (encoder_context->quality_level != ENCODER_LOW_QUALITY) ? 1 : 0;
@@ -4059,7 +4109,11 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     VAEncPictureParameterBufferVP8 *pic_param = (VAEncPictureParameterBufferVP8 *)encode_state->pic_param_ext->buffer;
     VAQMatrixBufferVP8 *quant_param = (VAQMatrixBufferVP8 *)encode_state->q_matrix->buffer;
     int is_intra = (vp8_context->frame_type == MPEG_I_PICTURE);
+    int temporal_id = 0;
+    int num_layers = 1;
 
+    temporal_id = encoder_context->layer.curr_frame_layer_id;
+    num_layers = encoder_context->layer.num_layers;
     if (!pcmd)
         return;
 
@@ -4086,8 +4140,8 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     pcmd->dw5.brc_flag = 16 * vp8_context->internal_rate_mode;
     pcmd->dw5.max_num_paks = vp8_context->num_brc_pak_passes;
 
-    pcmd->dw6.tid = 0;
-    pcmd->dw6.num_t_levels = 1;
+    pcmd->dw6.tid = temporal_id;
+    pcmd->dw6.num_t_levels = num_layers;
 
     pcmd->dw8.start_global_adjust_mult0 = 1;
     pcmd->dw8.start_global_adjust_mult1 = 1;
@@ -4137,14 +4191,40 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     pcmd->dw17.key_frame_qp_seg2 = quant_param->quantization_index[2];
     pcmd->dw17.key_frame_qp_seg3 = quant_param->quantization_index[3];
 
-    pcmd->dw18.qdelta_plane0 = 0;
-    pcmd->dw18.qdelta_plane1 = 0;
-    pcmd->dw18.qdelta_plane2 = 0;
-    pcmd->dw18.qdelta_plane3 = 0;
+    pcmd->dw18.qdelta_plane0 = quant_param->quantization_index_delta[0];
+    pcmd->dw18.qdelta_plane1 = quant_param->quantization_index_delta[4];
+    pcmd->dw18.qdelta_plane2 = quant_param->quantization_index_delta[3];
+    pcmd->dw18.qdelta_plane3 = quant_param->quantization_index_delta[2];
 
     pcmd->dw19.qdelta_plane4 = 0;
-    pcmd->dw19.main_ref = is_intra ? 0 : mainref_table_vp8[vp8_context->ref_frame_ctrl];
-    pcmd->dw19.ref_frame_flags = is_intra ? 0 : vp8_context->ref_frame_ctrl;
+    pcmd->dw19.main_ref = 0;
+    pcmd->dw19.ref_frame_flags = 0;
+
+    if (num_layers > 1) {
+        unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
+        unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
+        unsigned int ref_frame_ctrl = vp8_context->ref_frame_ctrl;
+        unsigned char m_rfo[3];
+        unsigned int main_ref = 0;
+        unsigned int k = 0;
+        unsigned int i;
+
+        m_rfo[2] = first_ref;
+        m_rfo[1] = second_ref;
+        m_rfo[0] = 6 - m_rfo[2] - m_rfo[1];
+        for (i = 0; i < 3; i++) {
+            if (ref_frame_ctrl & (0x1 << (m_rfo[i] - 1))) {
+                main_ref |= (m_rfo[i] << (2 * k));
+                k++;
+            }
+        }
+        pcmd->dw19.main_ref = main_ref;
+        pcmd->dw19.ref_frame_flags = ref_frame_ctrl;
+    } else {
+        pcmd->dw19.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
+        pcmd->dw19.ref_frame_flags = vp8_context->ref_frame_ctrl;
+    }
+
 
     pcmd->dw20.seg_on = pic_param->pic_flags.bits.segmentation_enabled;
     pcmd->dw20.brc_method = vp8_context->internal_rate_mode;
@@ -4499,6 +4579,11 @@ i965_encoder_vp8_vme_mpu_set_curbe(VADriverContextP ctx,
     VAEncSequenceParameterBufferVP8 *seq_param = (VAEncSequenceParameterBufferVP8 *)encode_state->seq_param_ext->buffer;
     VAEncPictureParameterBufferVP8 *pic_param = (VAEncPictureParameterBufferVP8 *)encode_state->pic_param_ext->buffer;
     VAQMatrixBufferVP8 *quant_param = (VAQMatrixBufferVP8 *)encode_state->q_matrix->buffer;
+    int temporal_id = 0;
+    int num_layers = 1;
+
+    temporal_id = encoder_context->layer.curr_frame_layer_id;
+    num_layers = encoder_context->layer.num_layers;
 
     if (!pcmd)
         return;
@@ -4524,8 +4609,8 @@ i965_encoder_vp8_vme_mpu_set_curbe(VADriverContextP ctx,
     pcmd->dw1.sharpness_level = pic_param->sharpness_level;
     pcmd->dw1.loop_filter_adjustment_on = pic_param->pic_flags.bits.loop_filter_adj_enable;
     pcmd->dw1.mb_no_coeffiscient_skip = pic_param->pic_flags.bits.mb_no_coeff_skip;
-    pcmd->dw1.golden_reference_copy_flag = pic_param->pic_flags.bits.copy_buffer_to_golden;
-    pcmd->dw1.alternate_reference_copy_flag = pic_param->pic_flags.bits.copy_buffer_to_alternate;
+    pcmd->dw1.golden_reference_copy_flag = (pic_param->pic_flags.bits.refresh_golden_frame == 1) ? 3 : pic_param->pic_flags.bits.copy_buffer_to_golden;
+    pcmd->dw1.alternate_reference_copy_flag = (pic_param->pic_flags.bits.refresh_alternate_frame == 1) ? 3 : pic_param->pic_flags.bits.copy_buffer_to_alternate;
     pcmd->dw1.last_frame_update = pic_param->pic_flags.bits.refresh_last;
     pcmd->dw1.sign_bias_golden = pic_param->pic_flags.bits.sign_bias_golden;
     pcmd->dw1.sign_bias_alt_ref = pic_param->pic_flags.bits.sign_bias_alternate;
@@ -4565,8 +4650,8 @@ i965_encoder_vp8_vme_mpu_set_curbe(VADriverContextP ctx,
     pcmd->dw7.forced_token_surface_read = 1;
     pcmd->dw7.mode_cost_enable_flag = 1;
 
-    pcmd->dw8.num_t_levels = 1;
-    pcmd->dw8.temporal_layer_id = 0;
+    pcmd->dw8.num_t_levels = num_layers;
+    pcmd->dw8.temporal_layer_id = temporal_id;
 
     pcmd->dw12.histogram_bti = VP8_BTI_MPU_HISTOGRAM;
     pcmd->dw13.reference_mode_probability_bti = VP8_BTI_MPU_REF_MODE_PROBABILITY;
@@ -5256,6 +5341,7 @@ i965_encoder_vp8_vme_var_init(VADriverContextP ctx,
                               struct i965_encoder_vp8_context *vp8_context)
 {
     struct i965_driver_data *i965 = i965_driver_data(ctx);
+    int i;
 
     vp8_context->mocs = i965->intel.mocs_state;
 
@@ -5293,10 +5379,11 @@ i965_encoder_vp8_vme_var_init(VADriverContextP ctx,
     vp8_context->hme_16x_enabled = 0;
     vp8_context->brc_initted = 0;
     vp8_context->frame_num = 0;
-    vp8_context->framerate = (struct intel_fraction) {
-        30, 1
-    };
-
+    for (i = 0; i < MAX_TEMPORAL_LAYERS; i++) {
+        vp8_context->framerate[i] = (struct intel_fraction) {
+            30, 1
+        };
+    }
     return True;
 }
 
@@ -6292,4 +6379,51 @@ i965_encoder_vp8_pak_context_init(VADriverContextP ctx, struct intel_encoder_con
     encoder_context->get_status = i965_encoder_vp8_get_status;
 
     return True;
+}
+
+VAStatus i965_CalMaxLevelRatioForTL_g8lp(
+    struct intel_fraction *framerate,
+    unsigned int *target_bit_rate,
+    unsigned int num_layers_minus1,
+    unsigned int *temp_bit_rate)
+{
+    unsigned int ti, tj;
+    unsigned int num_level[MAX_TEMPORAL_LAYERS];
+    unsigned int atemp_ratios[MAX_TEMPORAL_LAYERS];
+    int  acculate_temp_bit_rate;
+
+    for (ti = 0; ti < num_layers_minus1; ti++) {
+        atemp_ratios[ti] = framerate[num_layers_minus1].num * framerate[ti].den
+                           / (framerate[num_layers_minus1].den * framerate[ti].num); // it should be integer
+    }
+
+    for (ti = 0; ti < num_layers_minus1 + 1; ti++) {
+        num_level[ti] = 0;
+        for (tj = 0; tj < atemp_ratios[0]; tj++) {
+            if (tj % atemp_ratios[ti] == 0)
+                num_level[ti] += 1; // ratio of framerate
+        }
+    }
+
+    temp_bit_rate[0] = target_bit_rate[0] * 64 / target_bit_rate[num_layers_minus1];
+
+    acculate_temp_bit_rate = temp_bit_rate[0];
+    for (ti = 1; ti < (unsigned int)num_layers_minus1; ti++) {
+        temp_bit_rate[ti] = (target_bit_rate[ti] - target_bit_rate[ti - 1]) * 64 / target_bit_rate[num_layers_minus1];
+        acculate_temp_bit_rate += temp_bit_rate[ti];
+    }
+
+    temp_bit_rate[num_layers_minus1] = 64 - acculate_temp_bit_rate; // The sum of Temp_bitRate must be 64 because this will affect the QP directly
+
+    for (ti = 0; ti < num_layers_minus1 + 1; ti++) {
+        int tem_level;
+        if (ti == 0)
+            tem_level = num_level[0];
+        else
+            tem_level = num_level[ti] - num_level[ti - 1];
+
+        temp_bit_rate[ti] = atemp_ratios[0] * temp_bit_rate[ti] / tem_level;
+    }
+
+    return VA_STATUS_SUCCESS;
 }
