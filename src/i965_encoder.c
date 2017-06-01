@@ -637,7 +637,8 @@ intel_encoder_check_framerate_parameter(VADriverContextP ctx,
 
     if (misc->framerate & 0xffff0000)
         framerate = (struct intel_fraction) {
-        misc->framerate & 0xffff, misc->framerate >> 16 & 0xffff
+        //  misc->framerate & 0xffff, misc->framerate >> 16 & 0xffff
+        misc->framerate >> 16 & 0xffff, misc->framerate & 0xffff
     };
     else
         framerate = (struct intel_fraction) {
