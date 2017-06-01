@@ -672,8 +672,16 @@ typedef struct _gen9_avc_me_curbe_data {
     } dw13;
 
     struct {
-        uint32_t l0_ref_pic_polarity_bits: 8;
-        uint32_t l1_ref_pic_polarity_bits: 2;
+        uint32_t l0_ref_pic0_polarity_bits: 1;
+        uint32_t l0_ref_pic1_polarity_bits: 1;
+        uint32_t l0_ref_pic2_polarity_bits: 1;
+        uint32_t l0_ref_pic3_polarity_bits: 1;
+        uint32_t l0_ref_pic4_polarity_bits: 1;
+        uint32_t l0_ref_pic5_polarity_bits: 1;
+        uint32_t l0_ref_pic6_polarity_bits: 1;
+        uint32_t l0_ref_pic7_polarity_bits: 1;
+        uint32_t l1_ref_pic0_polarity_bits: 1;
+        uint32_t l1_ref_pic1_polarity_bits: 1;
         uint32_t reserved: 22;
     } dw14;
 
@@ -816,7 +824,7 @@ typedef struct _gen9_avc_me_curbe_data {
 
     /* reserved */
     struct {
-        uint32_t reserved;
+        uint32_t vdenc_steam_insurf_index;
     } dw38;
 } gen9_avc_me_curbe_data;
 
@@ -1792,7 +1800,8 @@ typedef struct _gen9_avc_mbenc_curbe_data {
         uint32_t enable_global_motion_bias_adjustment: 1;
         uint32_t enable_adaptive_search_window_size: 1;
         uint32_t enable_per_mb_static_check: 1;
-        uint32_t reserved0: 3;
+        uint32_t remove_intra_refresh_overlap : 1;
+        uint32_t reserved0: 2;
         uint32_t list1_ref_id0_field_parity: 1;
         uint32_t list1_ref_id1_field_parity: 1;
         uint32_t mad_enable_falg: 1;
@@ -1955,116 +1964,199 @@ typedef struct _gen9_avc_mbenc_curbe_data {
     } dw59;
 
     struct {
-        uint32_t reserved;
+        uint32_t ipcm_qp0: 8;
+        uint32_t ipcm_qp1: 8;
+        uint32_t ipcm_qp2: 8;
+        uint32_t ipcm_qp3: 8;
     } dw60;
 
     struct {
-        uint32_t reserved;
+        uint32_t ipcm_qp4: 8;
+        uint32_t reservedi: 8;
+        uint32_t ipcm_thresh0: 16;
     } dw61;
 
     struct {
-        uint32_t reserved;
+        uint32_t ipcm_thresh1: 16;
+        uint32_t ipcm_thresh2: 16;
     } dw62;
 
     struct {
-        uint32_t reserved;
+        uint32_t ipcm_thresh3: 16;
+        uint32_t ipcm_thresh4: 16;
     } dw63;
 
     struct {
-        uint32_t mb_data_surf_index;
+        uint32_t num_mv_predictors_l0: 4;
+        uint32_t reserved0: 1;
+        uint32_t reserved1: 1;
+        uint32_t vme_distortion_output_enable: 1;
+        uint32_t per_mb_qp_enable: 1;
+        uint32_t mb_input_enbale: 1;
+        uint32_t fei_mode: 1;
+        uint32_t num_mv_predictors_l1: 4;
+        uint32_t default_mv_prepare: 2;
+        uint32_t num_of_mv_bipred_calls: 8;
+        uint32_t enable_color_bleed_wa_for_intra_slice: 1;
+        uint32_t l1_list_ref0_picture_coding_type: 2;
+        uint32_t reserved2: 5;
     } dw64;
 
     struct {
-        uint32_t mv_data_surf_index;
+        uint32_t flatness_threshhold;
     } dw65;
 
     struct {
-        uint32_t i_dist_surf_index;
+        uint32_t bottom_field_offset_l1_list_ref0_mv;
     } dw66;
 
     struct {
-        uint32_t src_y_surf_index;
+        uint32_t bottom_field_offset_l1_list_ref0_mb_code;
     } dw67;
 
     struct {
-        uint32_t mb_specific_data_surf_index;
+        uint32_t reserved;
     } dw68;
 
     struct {
-        uint32_t aux_vme_out_surf_index;
+        uint32_t reserved;
     } dw69;
 
     struct {
-        uint32_t curr_ref_pic_sel_surf_index;
+        uint32_t reserved;
     } dw70;
 
     struct {
-        uint32_t hme_mv_pred_fwd_bwd_surf_index;
+        uint32_t reserved;
     } dw71;
 
     struct {
-        uint32_t hme_dist_surf_index;
+        uint32_t reserved;
     } dw72;
 
     struct {
-        uint32_t slice_map_surf_index;
+        uint32_t reserved;
     } dw73;
 
     struct {
-        uint32_t fwd_frm_mb_data_surf_index;
+        uint32_t reserved;
     } dw74;
 
     struct {
-        uint32_t fwd_frm_mv_surf_index;
+        uint32_t reserved;
     } dw75;
 
     struct {
-        uint32_t mb_qp_buffer;
+        uint32_t reserved;
     } dw76;
 
     struct {
-        uint32_t mb_brc_lut;
+        uint32_t reserved;
     } dw77;
 
     struct {
-        uint32_t vme_inter_prediction_surf_index;
+        uint32_t reserved;
     } dw78;
 
     struct {
-        uint32_t vme_inter_prediction_mr_surf_index;
+        uint32_t reserved;
     } dw79;
 
     struct {
-        uint32_t mb_stats_surf_index;
+        uint32_t mb_data_surf_index;
     } dw80;
 
     struct {
-        uint32_t mad_surf_index;
+        uint32_t mv_data_surf_index;
     } dw81;
 
     struct {
-        uint32_t force_non_skip_mb_map_surface;
+        uint32_t i_dist_surf_index;
     } dw82;
 
     struct {
-        uint32_t widi_wa_surf_index;
+        uint32_t src_y_surf_index;
     } dw83;
 
     struct {
-        uint32_t brc_curbe_surf_index;
+        uint32_t mb_specific_data_surf_index;
     } dw84;
 
     struct {
-        uint32_t static_detection_cost_table_index;
+        uint32_t aux_vme_out_surf_index;
     } dw85;
 
     struct {
-        uint32_t reserved0;
+        uint32_t curr_ref_pic_sel_surf_index;
     } dw86;
 
     struct {
-        uint32_t reserved0;
+        uint32_t hme_mv_pred_fwd_bwd_surf_index;
     } dw87;
+
+    struct {
+        uint32_t hme_dist_surf_index;
+    } dw88;
+
+    struct {
+        uint32_t slice_map_surf_index;
+    } dw89;
+
+    struct {
+        uint32_t fwd_frm_mb_data_surf_index;
+    } dw90;
+
+    struct {
+        uint32_t fwd_frm_mv_surf_index;
+    } dw91;
+
+    struct {
+        uint32_t mb_qp_buffer;
+    } dw92;
+
+    struct {
+        uint32_t mb_brc_lut;
+    } dw93;
+
+    struct {
+        uint32_t vme_inter_prediction_surf_index;
+    } dw94;
+
+    struct {
+        uint32_t vme_inter_prediction_mr_surf_index;
+    } dw95;
+
+    struct {
+        uint32_t mb_stats_surf_index;
+    } dw96;
+
+    struct {
+        uint32_t mad_surf_index;
+    } dw97;
+
+    struct {
+        uint32_t force_non_skip_mb_map_surface;
+    } dw98;
+
+    struct {
+        uint32_t widi_wa_surf_index;
+    } dw99;
+
+    struct {
+        uint32_t brc_curbe_surf_index;
+    } dw100;
+
+    struct {
+        uint32_t static_detection_cost_table_index;
+    } dw101;
+
+    struct {
+        uint32_t fei_mv_preditors_surf_index;
+    } dw102;
+
+    struct {
+        uint32_t reserved0;
+    } dw103;
 
 } gen9_avc_mbenc_curbe_data;
 
