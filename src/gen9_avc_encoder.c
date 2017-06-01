@@ -3295,7 +3295,9 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
         }
 
         if (is_g9) {
-            cmd.g9->dw58.mb_texture_threshold = 1024;
+            if (avc_state->adaptive_transform_decision_enable || avc_state->flatness_check_enable) {
+                cmd.g9->dw58.mb_texture_threshold = 1024;
+            }
             cmd.g9->dw58.tx_decision_threshold = 128;
         }
     }
@@ -3430,6 +3432,19 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
         cmd.g9->dw34.enable_global_motion_bias_adjustment = avc_state->global_motion_bias_adjustment_enable;
         if (is_g9 && avc_state->global_motion_bias_adjustment_enable)
             cmd.g9->dw59.hme_mv_cost_scaling_factor = avc_state->hme_mv_cost_scaling_factor;
+
+        {
+            /*    VAPictureH264 ref_picture = slice_param->RefPicList1[0];
+                cmd.g9->dw64.l1_list_ref0_picture_coding_type = avc_state->list_ref_idx[1][0];*/
+            bool bframe = pic_param->CurrPic.flags & 0x04;
+            if (bframe && ((cmd.g9->dw64.l1_list_ref0_picture_coding_type == 0x01) || (cmd.g9->dw64.l1_list_ref0_picture_coding_type == 0x03))) {
+                uint32_t wfieldheightinmb = (generic_state->frame_height_in_mbs + 1) >> 1;
+                uint32_t wframeinmb = wfieldheightinmb * generic_state->frame_width_in_mbs * 128;
+                cmd.g9->dw66.bottom_field_offset_l1_list_ref0_mv = (wframeinmb + 0x1000 - 1) & (~(0x1000 - 1));
+                cmd.g9->dw67.bottom_field_offset_l1_list_ref0_mb_code = wfieldheightinmb * generic_state->frame_width_in_mbs * 64;
+            }
+
+        }
 
     }
 
@@ -3566,28 +3581,41 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
     }
 
     if (is_g9) {
-        cmd.g9->dw64.mb_data_surf_index = GEN9_AVC_MBENC_MFC_AVC_PAK_OBJ_INDEX;
-        cmd.g9->dw65.mv_data_surf_index = GEN9_AVC_MBENC_IND_MV_DATA_INDEX;
-        cmd.g9->dw66.i_dist_surf_index = GEN9_AVC_MBENC_BRC_DISTORTION_INDEX;
-        cmd.g9->dw67.src_y_surf_index = GEN9_AVC_MBENC_CURR_Y_INDEX;
-        cmd.g9->dw68.mb_specific_data_surf_index = GEN9_AVC_MBENC_MB_SPECIFIC_DATA_INDEX;
-        cmd.g9->dw69.aux_vme_out_surf_index = GEN9_AVC_MBENC_AUX_VME_OUT_INDEX;
-        cmd.g9->dw70.curr_ref_pic_sel_surf_index = GEN9_AVC_MBENC_REFPICSELECT_L0_INDEX;
-        cmd.g9->dw71.hme_mv_pred_fwd_bwd_surf_index = GEN9_AVC_MBENC_MV_DATA_FROM_ME_INDEX;
-        cmd.g9->dw72.hme_dist_surf_index = GEN9_AVC_MBENC_4XME_DISTORTION_INDEX;
-        cmd.g9->dw73.slice_map_surf_index = GEN9_AVC_MBENC_SLICEMAP_DATA_INDEX;
-        cmd.g9->dw74.fwd_frm_mb_data_surf_index = GEN9_AVC_MBENC_FWD_MB_DATA_INDEX;
-        cmd.g9->dw75.fwd_frm_mv_surf_index = GEN9_AVC_MBENC_FWD_MV_DATA_INDEX;
-        cmd.g9->dw76.mb_qp_buffer = GEN9_AVC_MBENC_MBQP_INDEX;
-        cmd.g9->dw77.mb_brc_lut = GEN9_AVC_MBENC_MBBRC_CONST_DATA_INDEX;
-        cmd.g9->dw78.vme_inter_prediction_surf_index = GEN9_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_0_INDEX;
-        cmd.g9->dw79.vme_inter_prediction_mr_surf_index = GEN9_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_1_INDEX;
-        cmd.g9->dw80.mb_stats_surf_index = GEN9_AVC_MBENC_MB_STATS_INDEX;
-        cmd.g9->dw81.mad_surf_index = GEN9_AVC_MBENC_MAD_DATA_INDEX;
-        cmd.g9->dw82.force_non_skip_mb_map_surface = GEN9_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX;
-        cmd.g9->dw83.widi_wa_surf_index = GEN9_AVC_MBENC_WIDI_WA_INDEX;
-        cmd.g9->dw84.brc_curbe_surf_index = GEN9_AVC_MBENC_BRC_CURBE_DATA_INDEX;
-        cmd.g9->dw85.static_detection_cost_table_index = GEN9_AVC_MBENC_SFD_COST_TABLE_INDEX;
+        cmd.g9->dw60.ipcm_qp0 = 2;
+        cmd.g9->dw60.ipcm_qp1 = 4;
+        cmd.g9->dw60.ipcm_qp2 = 6;
+        cmd.g9->dw60.ipcm_qp3 = 10;
+        cmd.g9->dw61.ipcm_qp4 = 18;
+        cmd.g9->dw61.ipcm_thresh0 = 3000;
+        cmd.g9->dw62.ipcm_thresh1 = 3600;
+        cmd.g9->dw62.ipcm_thresh2 = 5000;
+        cmd.g9->dw63.ipcm_thresh3 = 8000;
+        cmd.g9->dw63.ipcm_thresh4 = 9000;
+        cmd.g9->dw64.enable_color_bleed_wa_for_intra_slice = 0;
+        cmd.g9->dw64.mb_input_enbale = 0;
+
+        cmd.g9->dw80.mb_data_surf_index = GEN9_AVC_MBENC_MFC_AVC_PAK_OBJ_INDEX;
+        cmd.g9->dw81.mv_data_surf_index = GEN9_AVC_MBENC_IND_MV_DATA_INDEX;
+        cmd.g9->dw82.i_dist_surf_index = GEN9_AVC_MBENC_BRC_DISTORTION_INDEX;
+        cmd.g9->dw83.src_y_surf_index = GEN9_AVC_MBENC_CURR_Y_INDEX;
+        cmd.g9->dw84.mb_specific_data_surf_index = GEN9_AVC_MBENC_MB_SPECIFIC_DATA_INDEX;
+        cmd.g9->dw85.aux_vme_out_surf_index = GEN9_AVC_MBENC_AUX_VME_OUT_INDEX;
+        cmd.g9->dw86.curr_ref_pic_sel_surf_index = GEN9_AVC_MBENC_REFPICSELECT_L0_INDEX;
+        cmd.g9->dw87.hme_mv_pred_fwd_bwd_surf_index = GEN9_AVC_MBENC_MV_DATA_FROM_ME_INDEX;
+        cmd.g9->dw88.hme_dist_surf_index = GEN9_AVC_MBENC_4XME_DISTORTION_INDEX;
+        cmd.g9->dw89.slice_map_surf_index = GEN9_AVC_MBENC_SLICEMAP_DATA_INDEX;
+        cmd.g9->dw90.fwd_frm_mb_data_surf_index = GEN9_AVC_MBENC_FWD_MB_DATA_INDEX;
+        cmd.g9->dw91.fwd_frm_mv_surf_index = GEN9_AVC_MBENC_FWD_MV_DATA_INDEX;
+        cmd.g9->dw92.mb_qp_buffer = GEN9_AVC_MBENC_MBQP_INDEX;
+        cmd.g9->dw93.mb_brc_lut = GEN9_AVC_MBENC_MBBRC_CONST_DATA_INDEX;
+        cmd.g9->dw94.vme_inter_prediction_surf_index = GEN9_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_0_INDEX;
+        cmd.g9->dw95.vme_inter_prediction_mr_surf_index = GEN9_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_1_INDEX;
+        cmd.g9->dw96.mb_stats_surf_index = GEN9_AVC_MBENC_MB_STATS_INDEX;
+        cmd.g9->dw97.mad_surf_index = GEN9_AVC_MBENC_MAD_DATA_INDEX;
+        cmd.g9->dw98.force_non_skip_mb_map_surface = GEN9_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX;
+        cmd.g9->dw99.widi_wa_surf_index = GEN9_AVC_MBENC_WIDI_WA_INDEX;
+        cmd.g9->dw100.brc_curbe_surf_index = GEN9_AVC_MBENC_BRC_CURBE_DATA_INDEX;
+        cmd.g9->dw101.static_detection_cost_table_index = GEN9_AVC_MBENC_SFD_COST_TABLE_INDEX;
     }
 
     i965_gpe_context_unmap_curbe(gpe_context);
@@ -4200,7 +4228,7 @@ gen9_avc_set_curbe_me(VADriverContextP ctx,
     curbe_cmd->dw35._4x_me_output_brc_dist_surf_index = GEN9_AVC_ME_BRC_DISTORTION_INDEX;
     curbe_cmd->dw36.vme_fwd_inter_pred_surf_index = GEN9_AVC_ME_CURR_FOR_FWD_REF_INDEX;
     curbe_cmd->dw37.vme_bdw_inter_pred_surf_index = GEN9_AVC_ME_CURR_FOR_BWD_REF_INDEX;
-    curbe_cmd->dw38.reserved = GEN9_AVC_ME_VDENC_STREAMIN_INDEX;
+    curbe_cmd->dw38.vdenc_steam_insurf_index = GEN9_AVC_ME_VDENC_STREAMIN_INDEX;
 
     i965_gpe_context_unmap_curbe(gpe_context);
     return;
