@@ -5959,8 +5959,8 @@ i965_encoder_vp8_pak_tpu_set_curbe(VADriverContextP ctx,
         pcmd->dw7.skip_cost_delta_threshold = 100;
         pcmd->dw7.token_cost_delta_threshold = 50;
     } else {
-        pcmd->dw7.skip_cost_delta_threshold = 0;
-        pcmd->dw7.token_cost_delta_threshold = 0;
+        pcmd->dw7.skip_cost_delta_threshold = 1;
+        pcmd->dw7.token_cost_delta_threshold = 1;
     }
 
     pcmd->dw12.pak_token_statistics_bti = VP8_BTI_TPU_PAK_TOKEN_STATISTICS;
