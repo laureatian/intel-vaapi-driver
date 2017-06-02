@@ -42,7 +42,7 @@
 
 #include "i965_post_processing.h"
 #include "i965_encoder_api.h"
-
+#include "time.h"
 static struct intel_fraction
 reduce_fraction(struct intel_fraction f)
 {
@@ -1345,6 +1345,8 @@ intel_encoder_end_picture(VADriverContextP ctx,
                           union codec_state *codec_state,
                           struct hw_context *hw_context)
 {
+    time_t start, end;
+    start = time(NULL);
     struct intel_encoder_context *encoder_context = (struct intel_encoder_context *)hw_context;
     struct encode_state *encode_state = &codec_state->encode;
     VAStatus vaStatus;
@@ -1370,7 +1372,8 @@ intel_encoder_end_picture(VADriverContextP ctx,
      * for VAEncROI in va.h
      */
     encoder_context->brc.num_roi = 0;
-
+    end = time(NULL);
+    printf("time: %.0f s\n", difftime(end, start));
     return VA_STATUS_SUCCESS;
 }
 
