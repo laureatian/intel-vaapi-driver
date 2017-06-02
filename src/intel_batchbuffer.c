@@ -145,6 +145,9 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
     dri_bo_unmap(batch->buffer);
     used = batch->ptr - batch->map;
     batch->run(batch->buffer, used, 0, 0, 0, batch->flag);
+
+    dri_bo_map(batch->buffer, 1);
+    dri_bo_unmap(batch->buffer);
     intel_batchbuffer_reset(batch, batch->size);
 }
 
