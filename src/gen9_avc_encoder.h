@@ -1028,7 +1028,8 @@ typedef struct _gen9_avc_frame_brc_update_curbe_data {
         uint32_t maximum_qp: 8;
         uint32_t enable_force_skip: 1;
         uint32_t enable_sliding_window: 1;
-        uint32_t reserved: 6;
+        uint32_t enable_extrem_low_delay: 1;
+        uint32_t reserved: 5;
     } dw6;
 
     struct {
@@ -1087,8 +1088,8 @@ typedef struct _gen9_avc_frame_brc_update_curbe_data {
     struct {
         uint32_t reserved0: 8;
         uint32_t enable_roi: 8;
-        uint32_t reserved1: 8;
-        uint32_t reserved2: 8;
+        uint32_t rounding_intra: 8;
+        uint32_t rounding_inter: 8;
     } dw15;
 
     struct {

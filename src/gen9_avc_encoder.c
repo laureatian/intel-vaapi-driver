@@ -2223,7 +2223,7 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
     cmd->dw6.frame_rate_m = generic_state->frames_per_100s;
     cmd->dw7.frame_rate_d = 100;
     cmd->dw8.brc_flag = 0;
-    cmd->dw8.brc_flag |= (generic_state->mb_brc_enabled) ? 0 : 0x8000;
+    cmd->dw8.brc_flag |= (generic_state->mb_brc_enabled && !generic_state->brc_roi_enable) ? 0 : 0x8000;
 
 
     if (generic_state->internal_rate_mode == VA_RC_CBR) {
@@ -2234,7 +2234,7 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
     } else if (generic_state->internal_rate_mode == VA_RC_VBR) {
         //VBR
         if (cmd->dw4.max_bit_rate < cmd->dw3.average_bit_rate) {
-            cmd->dw4.max_bit_rate = cmd->dw3.average_bit_rate << 1;
+            cmd->dw4.max_bit_rate = cmd->dw4.max_bit_rate;
         }
         cmd->dw8.brc_flag = cmd->dw8.brc_flag | INTEL_ENCODE_BRCINIT_ISVBR;
 
@@ -2268,7 +2268,7 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
 
     //AVBR
     if (generic_state->internal_rate_mode == INTEL_BRC_AVBR) {
-        cmd->dw2.buf_size_in_bits = 2 * generic_state->target_bit_rate * 1000;
+        cmd->dw2.buf_size_in_bits = 2 * generic_state->target_bit_rate;
         cmd->dw1.init_buf_full_in_bits = (unsigned int)(3 * cmd->dw2.buf_size_in_bits / 4);
 
     }
@@ -2461,6 +2461,7 @@ gen9_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
     }
     cmd->dw6.enable_force_skip = avc_state->enable_force_skip ;
     cmd->dw6.enable_sliding_window = 0 ;
+    cmd->dw6.enable_extrem_low_delay = 0;
 
     generic_state->brc_init_current_target_buf_full_in_bits += generic_state->brc_init_reset_input_bits_per_frame;
 
@@ -2478,6 +2479,8 @@ gen9_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
 
     }
     cmd->dw15.enable_roi = generic_state->brc_roi_enable ;
+    cmd->dw15.rounding_intra = 5;
+    cmd->dw15.rounding_inter = avc_state->rounding_value;
 
     memset(&common_param, 0, sizeof(common_param));
     common_param.frame_width_in_pixel = generic_state->frame_width_in_pixel;
@@ -2748,11 +2751,28 @@ gen9_avc_set_curbe_brc_mb_update(VADriverContextP ctx,
 
     cmd->dw0.cur_frame_type = generic_state->frame_type;
     if (generic_state->brc_roi_enable) {
-        cmd->dw0.enable_roi = 1;
+        if (encoder_context->brc.roi_value_is_qp_delta) {
+            cmd->dw0.enable_roi = 2;
+            cmd->dw0.roi_ratio = 0;
+        } else {
+            cmd->dw0.enable_roi = 1;
+            uint32_t roi_size = 0;
+            uint32_t roi_ratio = 0;
+            uint32_t i = 0;
+            for (i = 0; i < generic_state->num_roi ; i++) {
+                roi_size += abs(encoder_context->brc.roi[i].top - encoder_context->brc.roi[i].bottom) * abs(encoder_context->brc.roi[i].right - encoder_context->brc.roi[i].left);
+            }
+            if (roi_size) {
+                uint32_t num_mbs = generic_state->frame_width_in_mbs * generic_state->frame_height_in_mbs;
+                roi_ratio = 2 * (num_mbs * 256 / roi_size - 1);
+                roi_ratio = 51 < roi_ratio ? 51 : roi_ratio;
+            }
+            cmd->dw0.roi_ratio = roi_ratio;
+        }
     } else {
+        cmd->dw0.roi_ratio = 0;
         cmd->dw0.enable_roi = 0;
     }
-
     i965_gpe_context_unmap_curbe(gpe_context);
 
     return;
@@ -4816,6 +4836,64 @@ gen9_avc_kernel_sfd(VADriverContextP ctx,
     return VA_STATUS_SUCCESS;
 }
 
+static void
+gen9_setup_roi_surface(VADriverContextP ctx,
+                       struct encode_state *encode_state,
+                       struct intel_encoder_context *encoder_context)
+{
+    struct encoder_vme_mfc_context * vme_context = (struct encoder_vme_mfc_context *)encoder_context->vme_context;
+    struct generic_enc_codec_state * generic_state = (struct generic_enc_codec_state *)vme_context->generic_enc_state;
+    struct i965_avc_encoder_context * avc_ctx = (struct i965_avc_encoder_context *)vme_context->private_enc_ctx;
+    int down_scaled_width_mb4x = (generic_state->frame_width_in_pixel / 4 + 15) / 16;
+    int down_scaled_height_mb4x = (generic_state->frame_height_in_pixel / 4 + 15) / 16;
+    int buffer_width_in_byte = ((down_scaled_width_mb4x << 4) + 63)  & (~ 63);
+    int buffer_height_in_byte = ((down_scaled_height_mb4x << 4) + 63)  & (~ 63);
+    unsigned int *pdata = i965_map_gpe_resource(&avc_ctx->res_mbbrc_roi_surface);
+    int buffer_size = buffer_width_in_byte * buffer_height_in_byte;
+    int num_mbs = generic_state->frame_width_in_mbs * generic_state->frame_height_in_mbs;
+    unsigned int u_mb = 0;
+    unsigned int roi = 0;
+    unsigned int out_data;
+    int qp_level = 0;
+    for (u_mb = 0; u_mb < num_mbs; u_mb ++) {
+        int curr_mby = u_mb / generic_state->frame_width_in_mbs;
+        int curr_mbx = u_mb - curr_mby * generic_state->frame_width_in_mbs;
+
+        out_data = 0;
+
+        for (roi = generic_state->num_roi - 1 ; roi >= 0; roi --) {
+            qp_level = 0;
+            if (encoder_context->brc.roi_value_is_qp_delta) {
+                qp_level = -generic_state->roi[roi].value;
+            } else {
+                qp_level = generic_state->roi[roi].value * 6;
+            }
+
+            if (qp_level == 0) {
+                continue;
+            }
+
+            if ((curr_mbx >= generic_state->roi[roi].left) && (curr_mbx < generic_state->roi[roi].right) &&
+                (curr_mby >= generic_state->roi[roi].top) && (curr_mby < generic_state->roi[roi].bottom)) {
+                out_data = 15 | ((qp_level & 0xFF) << 8);
+            } else if (0) {
+                if ((curr_mbx >= generic_state->roi[roi].left - 1) && (curr_mbx < generic_state->roi[roi].right + 1) &&
+                    (curr_mby >= generic_state->roi[roi].top - 1) && (curr_mby < generic_state->roi[roi].bottom + 1)) {
+                    out_data = 14 | ((qp_level & 0xFF) << 8);
+                } else if ((curr_mbx >= generic_state->roi[roi].left - 2) && (curr_mbx < generic_state->roi[roi].right + 2) &&
+                           (curr_mby >= generic_state->roi[roi].top - 2) && (curr_mby < generic_state->roi[roi].bottom + 2)) {
+                    out_data = 13 | ((qp_level & 0xFF) << 8);
+                } else if ((curr_mbx >= generic_state->roi[roi].left - 3) && (curr_mbx < generic_state->roi[roi].right + 3) &&
+                           (curr_mby >= generic_state->roi[roi].top - 3) && (curr_mby < generic_state->roi[roi].bottom + 3)) {
+                    out_data = 12 | ((qp_level & 0xFF) << 8);
+                }
+            }
+        }
+        pdata[(curr_mby * (buffer_size >> 2)) + curr_mbx] = out_data;
+    }
+    i965_unmap_gpe_resource(&avc_ctx->res_mbbrc_roi_surface);
+}
+
 /*
 kernel related function:init/destroy etc
 */
@@ -5816,7 +5894,9 @@ gen9_avc_vme_gpe_kernel_run(VADriverContextP ctx,
             gen9_avc_kernel_mbenc(ctx, encode_state, encoder_context, true);
         }
         gen9_avc_kernel_brc_frame_update(ctx, encode_state, encoder_context);
-
+        if (generic_state->brc_roi_enable) {
+            gen9_setup_roi_surface(ctx, encode_state, encoder_context);
+        }
         if (avc_state->brc_split_enable && generic_state->mb_brc_enabled) {
             gen9_avc_kernel_brc_mb_update(ctx, encode_state, encoder_context);
         }
