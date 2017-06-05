@@ -2223,7 +2223,7 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
     cmd->dw6.frame_rate_m = generic_state->frames_per_100s;
     cmd->dw7.frame_rate_d = 100;
     cmd->dw8.brc_flag = 0;
-    cmd->dw8.brc_flag |= (generic_state->mb_brc_enabled) ? 0 : 0x8000;
+    cmd->dw8.brc_flag |= (generic_state->mb_brc_enabled && !generic_state->brc_roi_enable) ? 0 : 0x8000;
 
 
     if (generic_state->internal_rate_mode == VA_RC_CBR) {
@@ -2234,7 +2234,7 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
     } else if (generic_state->internal_rate_mode == VA_RC_VBR) {
         //VBR
         if (cmd->dw4.max_bit_rate < cmd->dw3.average_bit_rate) {
-            cmd->dw4.max_bit_rate = cmd->dw3.average_bit_rate << 1;
+            cmd->dw4.max_bit_rate = cmd->dw4.max_bit_rate;
         }
         cmd->dw8.brc_flag = cmd->dw8.brc_flag | INTEL_ENCODE_BRCINIT_ISVBR;
 
@@ -2268,7 +2268,7 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
 
     //AVBR
     if (generic_state->internal_rate_mode == INTEL_BRC_AVBR) {
-        cmd->dw2.buf_size_in_bits = 2 * generic_state->target_bit_rate * 1000;
+        cmd->dw2.buf_size_in_bits = 2 * generic_state->target_bit_rate;
         cmd->dw1.init_buf_full_in_bits = (unsigned int)(3 * cmd->dw2.buf_size_in_bits / 4);
 
     }
@@ -2461,6 +2461,7 @@ gen9_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
     }
     cmd->dw6.enable_force_skip = avc_state->enable_force_skip ;
     cmd->dw6.enable_sliding_window = 0 ;
+    cmd->dw6.enable_extrem_low_delay = 0;
 
     generic_state->brc_init_current_target_buf_full_in_bits += generic_state->brc_init_reset_input_bits_per_frame;
 
@@ -2478,6 +2479,8 @@ gen9_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
 
     }
     cmd->dw15.enable_roi = generic_state->brc_roi_enable ;
+    cmd->dw15.rounding_intra = 5;
+    cmd->dw15.rounding_inter = avc_state->rounding_value;
 
     memset(&common_param, 0, sizeof(common_param));
     common_param.frame_width_in_pixel = generic_state->frame_width_in_pixel;
@@ -2748,11 +2751,28 @@ gen9_avc_set_curbe_brc_mb_update(VADriverContextP ctx,
 
     cmd->dw0.cur_frame_type = generic_state->frame_type;
     if (generic_state->brc_roi_enable) {
-        cmd->dw0.enable_roi = 1;
+        if (encoder_context->brc.roi_value_is_qp_delta) {
+            cmd->dw0.enable_roi = 2;
+            cmd->dw0.roi_ratio = 0;
+        } else {
+            cmd->dw0.enable_roi = 1;
+            uint32_t roi_size = 0;
+            uint32_t roi_ratio = 0;
+            uint32_t i = 0;
+            for (i = 0; i < generic_state->num_roi ; i++) {
+                roi_size += abs(encoder_context->brc.roi[i].top - encoder_context->brc.roi[i].bottom) * abs(encoder_context->brc.roi[i].right - encoder_context->brc.roi[i].left);
+            }
+            if (roi_size) {
+                uint32_t num_mbs = generic_state->frame_width_in_mbs * generic_state->frame_height_in_mbs;
+                roi_ratio = 2 * (num_mbs * 256 / roi_size - 1);
+                roi_ratio = 51 < roi_ratio ? 51 : roi_ratio;
+            }
+            cmd->dw0.roi_ratio = roi_ratio;
+        }
     } else {
+        cmd->dw0.roi_ratio = 0;
         cmd->dw0.enable_roi = 0;
     }
-
     i965_gpe_context_unmap_curbe(gpe_context);
 
     return;
