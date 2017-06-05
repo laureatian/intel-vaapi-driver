@@ -4652,10 +4652,8 @@ i965_encoder_vp8_vme_mpu_set_curbe(VADriverContextP ctx,
     pcmd->dw7.forced_token_surface_read = 1;
     pcmd->dw7.mode_cost_enable_flag = 1;
 
-    //pcmd->dw8.num_t_levels = num_layers;
-    // pcmd->dw8.temporal_layer_id = temporal_id;
-    pcmd->dw8.num_t_levels = 1;
-    pcmd->dw8.temporal_layer_id = 0;
+    pcmd->dw8.num_t_levels = num_layers;
+    pcmd->dw8.temporal_layer_id = temporal_id;
 
     pcmd->dw12.histogram_bti = VP8_BTI_MPU_HISTOGRAM;
     pcmd->dw13.reference_mode_probability_bti = VP8_BTI_MPU_REF_MODE_PROBABILITY;
@@ -4977,6 +4975,11 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
                                          struct encode_state *encode_state,
                                          struct intel_encoder_context *encoder_context)
 {
+    VAEncSequenceParameterBufferVP8 *seq_param = (VAEncSequenceParameterBufferVP8 *)encode_state->seq_param_ext->buffer;
+    VAEncPictureParameterBufferVP8 *pic_param = (VAEncPictureParameterBufferVP8 *)encode_state->pic_param_ext->buffer;
+    printf("erro resilientis % d\n.", seq_param->error_resilient);
+    printf("refresh entry probes % d\n.", pic_param->pic_flags.bits.refresh_entropy_probs);
+
     struct i965_encoder_vp8_context *vp8_context = encoder_context->vme_context;
     int is_intra = (vp8_context->frame_type == MPEG_I_PICTURE);
     unsigned char brc_enabled = (vp8_context->internal_rate_mode == I965_BRC_CBR ||
