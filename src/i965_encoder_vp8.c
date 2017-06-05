@@ -4652,8 +4652,10 @@ i965_encoder_vp8_vme_mpu_set_curbe(VADriverContextP ctx,
     pcmd->dw7.forced_token_surface_read = 1;
     pcmd->dw7.mode_cost_enable_flag = 1;
 
-    pcmd->dw8.num_t_levels = num_layers;
-    pcmd->dw8.temporal_layer_id = temporal_id;
+    //pcmd->dw8.num_t_levels = num_layers;
+    // pcmd->dw8.temporal_layer_id = temporal_id;
+    pcmd->dw8.num_t_levels = 1;
+    pcmd->dw8.temporal_layer_id = 0;
 
     pcmd->dw12.histogram_bti = VP8_BTI_MPU_HISTOGRAM;
     pcmd->dw13.reference_mode_probability_bti = VP8_BTI_MPU_REF_MODE_PROBABILITY;
