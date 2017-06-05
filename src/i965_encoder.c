@@ -761,7 +761,7 @@ intel_encoder_check_temporal_layer_structure(VADriverContextP ctx,
             encoder_context->layer.curr_frame_layer_id = encoder_context->layer.frame_layer_ids[(encoder_context->num_frames_in_sequence - 1) % encoder_context->layer.size_frame_layer_ids];
         else
             encoder_context->layer.curr_frame_layer_id = 0;
-
+        printf("num_fame_in sequence:%d\n", encoder_context->num_frames_in_sequence);
         return VA_STATUS_SUCCESS;
     }
 
