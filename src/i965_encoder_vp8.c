@@ -4093,7 +4093,7 @@ i965_encoder_vp8_vme_mbenc(VADriverContextP ctx,
         kernel_walker_param.walker_degree = VP8_ENCODER_45_DEGREE;
 
     i965_init_media_object_walker_parameters(encoder_context, &kernel_walker_param, &media_object_walker_param);
-    printf("mbenc_kernel");
+    printf("mbenc_kernel\n");
     i965_run_kernel_media_object_walker(ctx, encoder_context, gpe_context, media_function, &media_object_walker_param);
 
     return VA_STATUS_SUCCESS;
