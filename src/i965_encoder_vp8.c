@@ -6400,7 +6400,7 @@ VAStatus i965_CalMaxLevelRatioForTL_g8lp(
     unsigned int atemp_ratios[MAX_TEMPORAL_LAYERS];
     int  acculate_temp_bit_rate;
 
-    for (ti = 0; ti < num_layers_minus1; ti++) {
+    for (ti = 0; ti < num_layers_minus1 + 1; ti++) {
         atemp_ratios[ti] = framerate[num_layers_minus1].num * framerate[ti].den
                            / (framerate[num_layers_minus1].den * framerate[ti].num); // it should be integer
     }
