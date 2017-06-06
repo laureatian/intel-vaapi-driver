@@ -6416,7 +6416,7 @@ VAStatus i965_CalMaxLevelRatioForTL_g8lp(
     temp_bit_rate[0] = target_bit_rate[0] * 64 / target_bit_rate[num_layers_minus1];
 
     acculate_temp_bit_rate = temp_bit_rate[0];
-    for (ti = 1; ti < (unsigned int)num_layers_minus1 + 1; ti++) {
+    for (ti = 1; ti < (unsigned int)num_layers_minus1; ti++) {
         temp_bit_rate[ti] = (target_bit_rate[ti] - target_bit_rate[ti - 1]) * 64 / target_bit_rate[num_layers_minus1];
         acculate_temp_bit_rate += temp_bit_rate[ti];
     }
