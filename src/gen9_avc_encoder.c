@@ -4714,6 +4714,8 @@ gen9_avc_set_curbe_sfd(VADriverContextP ctx,
 
     if (!cmd)
         return;
+
+    bool bframe_picture = avc_state->pic_param->CurrPic.flags & 0x04;
     memset(cmd, 0, sizeof(gen9_avc_sfd_curbe_data));
 
     cmd->dw0.enable_intra_cost_scaling_for_static_frame = 1 ;
@@ -4727,7 +4729,7 @@ gen9_avc_set_curbe_sfd(VADriverContextP ctx,
     cmd->dw1.num_of_refs = slice_param->num_ref_idx_l0_active_minus1 ;
     cmd->dw1.qp_value = avc_state->pic_param->pic_init_qp + slice_param->slice_qp_delta ;
 
-    cmd->dw2.frame_width_in_mbs = generic_state->frame_width_in_mbs ;
+    cmd->dw2.frame_width_in_mbs = (generic_state->frame_width_in_mbs >> (2 + (bframe_picture ? 0 : 1))) << 2;
     cmd->dw2.frame_height_in_mbs = generic_state->frame_height_in_mbs ;
 
     cmd->dw3.large_mv_threshold = 128 ;
