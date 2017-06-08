@@ -4197,7 +4197,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     pcmd->dw18.qdelta_plane2 = quant_param->quantization_index_delta[3];
     pcmd->dw18.qdelta_plane3 = quant_param->quantization_index_delta[2];
 
-    pcmd->dw19.qdelta_plane4 = 0;
+    pcmd->dw19.qdelta_plane4 = quant_param->quantization_index_delta[1];
     pcmd->dw19.main_ref = 0;
     pcmd->dw19.ref_frame_flags = 0;
 
