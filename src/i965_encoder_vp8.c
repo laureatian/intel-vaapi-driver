@@ -4200,31 +4200,32 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     pcmd->dw19.main_ref = 0;
     pcmd->dw19.ref_frame_flags = 0;
 
-    if (num_layers > 1) {
-        unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
-        unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
-        unsigned int ref_frame_ctrl = vp8_context->ref_frame_ctrl;
-        unsigned char m_rfo[3];
-        unsigned int main_ref = 0;
-        unsigned int k = 0;
-        unsigned int i;
+    if (vp8_context->frame_type == MPEG_P_PICTURE) {
+        if (num_layers > 1) {
+            unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
+            unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
+            unsigned int ref_frame_ctrl = vp8_context->ref_frame_ctrl;
+            unsigned char m_rfo[3];
+            unsigned int main_ref = 0;
+            unsigned int k = 0;
+            unsigned int i;
 
-        m_rfo[2] = first_ref;
-        m_rfo[1] = second_ref;
-        m_rfo[0] = 6 - m_rfo[2] - m_rfo[1];
-        for (i = 0; i < 3; i++) {
-            if (ref_frame_ctrl & (0x1 << (m_rfo[i] - 1))) {
-                main_ref |= (m_rfo[i] << (2 * k));
-                k++;
+            m_rfo[2] = first_ref;
+            m_rfo[1] = second_ref;
+            m_rfo[0] = 6 - m_rfo[2] - m_rfo[1];
+            for (i = 0; i < 3; i++) {
+                if (ref_frame_ctrl & (0x1 << (m_rfo[i] - 1))) {
+                    main_ref |= (m_rfo[i] << (2 * k));
+                    k++;
+                }
             }
+            pcmd->dw19.main_ref = main_ref;
+            pcmd->dw19.ref_frame_flags = ref_frame_ctrl;
+        } else {
+            pcmd->dw19.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
+            pcmd->dw19.ref_frame_flags = vp8_context->ref_frame_ctrl;
         }
-        pcmd->dw19.main_ref = main_ref;
-        pcmd->dw19.ref_frame_flags = ref_frame_ctrl;
-    } else {
-        pcmd->dw19.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
-        pcmd->dw19.ref_frame_flags = vp8_context->ref_frame_ctrl;
     }
-
 
     pcmd->dw20.seg_on = pic_param->pic_flags.bits.segmentation_enabled;
     pcmd->dw20.brc_method = vp8_context->internal_rate_mode;
