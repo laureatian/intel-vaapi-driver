@@ -1169,6 +1169,14 @@ brc_skip_mv_threshold_vp8[256] = {
     1078, 1086, 1095, 1103, 1112, 1121, 1129, 1138, 1147, 1155, 1164, 1172, 1181, 1190, 1198, 1208
 };
 
+static VAStatus
+i965_cal_max_level_ratio_for_temporal_layer(
+    struct intel_fraction *framerate,
+    unsigned int *target_bit_rate,
+    unsigned int num_layers_minus1,
+    unsigned int *temp_bit_rate);
+
+
 void
 i965_encoder_vp8_check_motion_estimation(VADriverContextP ctx, struct intel_encoder_context *encoder_context)
 {
@@ -2521,7 +2529,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     pcmd->dw24.num_t_levels = num_layers;
     if (num_layers > 1) {
         unsigned int temp_bit_rate[MAX_TEMPORAL_LAYERS];
-        if (!i965_CalMaxLevelRatioForTL_g8lp(vp8_context->framerate, vp8_context->target_bit_rate, num_layers - 1, temp_bit_rate)) {
+        if (!i965_cal_max_level_ratio_for_temporal_layer(vp8_context->framerate, vp8_context->target_bit_rate, num_layers - 1, temp_bit_rate)) {
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer0 = (unsigned int) temp_bit_rate[0];
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer1 = (unsigned int) temp_bit_rate[1];
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer2 = (unsigned int) temp_bit_rate[2];
@@ -3405,7 +3413,7 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
                               ((encoder_context->quality_level == ENCODER_LOW_QUALITY) ? 0 : 2);
     pcmd->dw1.hme_enable = vp8_context->hme_enabled;
     pcmd->dw1.hme_combine_overlap = 1;
-    pcmd->dw1.enable_temporal_scalability = 0;
+    pcmd->dw1.enable_temporal_scalability = 1;
     pcmd->dw1.ref_frame_flags = vp8_context->ref_frame_ctrl;
     pcmd->dw1.enable_segmentation = segmentation_enabled;
     pcmd->dw1.enable_segmentation_info_update = 1;
@@ -3416,7 +3424,6 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
     if (num_layers > 1) {
         unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
         unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
-        unsigned int ref_frame_ctrl = vp8_context->ref_frame_ctrl;
         unsigned char m_rfo[3];
         unsigned int main_ref = 0;
         unsigned int k = 0;
@@ -6390,7 +6397,8 @@ i965_encoder_vp8_pak_context_init(VADriverContextP ctx, struct intel_encoder_con
     return True;
 }
 
-VAStatus i965_CalMaxLevelRatioForTL_g8lp(
+static VAStatus
+i965_cal_max_level_ratio_for_temporal_layer(
     struct intel_fraction *framerate,
     unsigned int *target_bit_rate,
     unsigned int num_layers_minus1,
