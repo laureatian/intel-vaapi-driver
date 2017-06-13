@@ -3421,7 +3421,7 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
     pcmd->dw1.mode_cost_enable_flag = 1;
 
     pcmd->dw1.main_ref = 0;
-    if (0) {
+    if (num_layers > 1) {
         unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
         unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
         unsigned char m_rfo[3];
@@ -4209,7 +4209,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     pcmd->dw19.ref_frame_flags = 0;
 
     if (vp8_context->frame_type == MPEG_P_PICTURE) {
-        if (0) {
+        if (num_layers > 1) {
             unsigned char first_ref = (pic_param->ref_flags.bits.reserved >> 18) & 0x3;
             unsigned char second_ref = (pic_param->ref_flags.bits.reserved >> 16) & 0x3;
             unsigned int ref_frame_ctrl = vp8_context->ref_frame_ctrl;
