@@ -2434,7 +2434,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     pcmd->dw0.profile_level_max_frame = vp8_context->frame_width * vp8_context->frame_height;
     pcmd->dw1.init_buf_full_in_bits = vp8_context->init_vbv_buffer_fullness_in_bit;
     pcmd->dw2.buf_size_in_bits = vp8_context->vbv_buffer_size_in_bit;
-    pcmd->dw3.average_bitrate = (vp8_context->target_bit_rate[num_layers - 1] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
+    pcmd->dw3.average_bitrate = (vp8_context->target_bit_rate[temporal_id] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
     pcmd->dw4.max_bitrate = (vp8_context->max_bit_rate[temporal_id] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
     pcmd->dw6.frame_rate_m = vp8_context->framerate[temporal_id].num;
     pcmd->dw7.frame_rate_d = vp8_context->framerate[temporal_id].den;
