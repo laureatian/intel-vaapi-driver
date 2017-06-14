@@ -2440,6 +2440,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     pcmd->dw4.max_bitrate = (vp8_context->max_bit_rate[temporal_id] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
     pcmd->dw6.frame_rate_m = vp8_context->framerate[num_layers - 1].num;
     pcmd->dw7.frame_rate_d = vp8_context->framerate[num_layers - 1].den;
+    printf("framerate[num_layers1]%d,%d \n", vp8_context->framerate[num_layers - 1].num, vp8_context->framerate[num_layers - 1].den);
     pcmd->dw8.brc_flag = 0;
     pcmd->dw8.gop_minus1 = vp8_context->gop_size - 1;
 
