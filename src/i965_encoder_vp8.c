@@ -5000,7 +5000,7 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
     unsigned char hme_16x_enabled = vp8_context->hme_16x_enabled;
 
     if (brc_enabled) {
-        if (!vp8_context->brc_initted || vp8_context->brc_need_reset) {
+        if (!vp8_context->brc_initted || vp8_context->brc_need_reset || (encoder_context->layer.num_layers > 1)) {
             i965_encoder_vp8_vme_brc_init_reset(ctx, encode_state, encoder_context);
         }
     }
