@@ -2545,6 +2545,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     pcmd->dw24.num_t_levels = num_layers;
     if (num_layers > 1) {
         unsigned int temp_bit_rate[MAX_TEMPORAL_LAYERS];
+        memset(temp_bit_rate, 0, sizeof(int) * 4);
         if (!i965_cal_max_level_ratio_for_temporal_layer(vp8_context->framerate, vp8_context->target_bit_rate, num_layers - 1, temp_bit_rate)) {
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer0 = (unsigned int) temp_bit_rate[0];
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer1 = (unsigned int) temp_bit_rate[1];
