@@ -2443,6 +2443,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
 
     memset(pcmd, 0, sizeof(*pcmd));
 
+    printf("brc init reset kernel\n");
     pcmd->dw0.profile_level_max_frame = vp8_context->frame_width * vp8_context->frame_height;
     pcmd->dw1.init_buf_full_in_bits = vp8_context->init_vbv_buffer_fullness_in_bit;
     pcmd->dw2.buf_size_in_bits = vp8_context->vbv_buffer_size_in_bit;
@@ -2622,7 +2623,6 @@ i965_encoder_vp8_vme_brc_init_reset(VADriverContextP ctx,
     gpe->setup_interface_data(ctx, gpe_context);
 
     memset(&media_object_param, 0, sizeof(media_object_param));
-    printf("brc init reset kernel\n");
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 
     return VA_STATUS_SUCCESS;
@@ -2641,7 +2641,7 @@ i965_encoder_vp8_vme_scaling_set_curbe(VADriverContextP ctx,
         return;
 
     memset(pcmd, 0, sizeof(*pcmd));
-
+    printf("scaling kernel\n");
     pcmd->dw0.input_picture_width = params->input_picture_width;
     pcmd->dw0.input_picture_height = params->input_picture_height;
 
@@ -2791,7 +2791,6 @@ i965_encoder_vp8_vme_scaling(VADriverContextP ctx,
     kernel_walker_param.resolution_y = down_scaled_height_in_mbs * 2;
     kernel_walker_param.no_dependency = 1;
     i965_init_media_object_walker_parameters(encoder_context, &kernel_walker_param, &media_object_walker_param);
-    printf("scaling kernel\n");
     i965_run_kernel_media_object_walker(ctx, encoder_context, gpe_context, media_function, &media_object_walker_param);
 
     return VA_STATUS_SUCCESS;
@@ -2811,6 +2810,7 @@ i965_encoder_vp8_vme_me_set_curbe(VADriverContextP ctx,
     if (!pcmd)
         return;
 
+    printf("me kernel\n");
     if (vp8_context->hme_16x_enabled) {
         if (params->use_16x_me)
             me_mode = VP8_ME_MODE_ME16X_BEFORE_ME4X;
@@ -3161,7 +3161,6 @@ i965_encoder_vp8_vme_me(VADriverContextP ctx,
     kernel_walker_params.resolution_y = down_scaled_height_in_mbs;
     kernel_walker_params.no_dependency = 1;
     i965_init_media_object_walker_parameters(encoder_context, &kernel_walker_params, &media_object_walker_param);
-    printf("me kernel\n");
     i965_run_kernel_media_object_walker(ctx, encoder_context, gpe_context, media_function, &media_object_walker_param);
 
     return VA_STATUS_SUCCESS;
@@ -4140,6 +4139,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
     int temporal_id = 0;
     int num_layers = 1;
 
+    printf("brc update kernel\n");
     temporal_id = encoder_context->layer.curr_frame_layer_id;
     num_layers = encoder_context->layer.num_layers;
     if (!pcmd)
@@ -4593,7 +4593,6 @@ i965_encoder_vp8_vme_brc_update(VADriverContextP ctx,
     gpe->setup_interface_data(ctx, gpe_context);
 
     memset(&media_object_param, 0, sizeof(media_object_param));
-    printf("brc update kernel\n");
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 
     return VA_STATUS_SUCCESS;
@@ -4619,6 +4618,7 @@ i965_encoder_vp8_vme_mpu_set_curbe(VADriverContextP ctx,
     if (!pcmd)
         return;
 
+    printf("mpu kernel\n");
     memset(pcmd, 0, sizeof(*pcmd));
 
     pcmd->dw0.frame_width = vp8_context->frame_width;
@@ -4993,7 +4993,6 @@ i965_encoder_vp8_vme_mpu(VADriverContextP ctx,
 
     i965_encoder_vp8_vme_mpu_add_surfaces(ctx, encode_state, encoder_context, gpe_context);
     gpe->setup_interface_data(ctx, gpe_context);
-    printf("mpu kernel\n");
     memset(&media_object_param, 0, sizeof(media_object_param));
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 
@@ -5964,6 +5963,7 @@ i965_encoder_vp8_pak_tpu_set_curbe(VADriverContextP ctx,
     if (!pcmd)
         return;
 
+    printf("tpu kernel\n");
     memset(pcmd, 0, sizeof(*pcmd));
 
     pcmd->dw0.mbs_in_frame = vp8_context->frame_width_in_mbs * vp8_context->frame_height_in_mbs;
@@ -6214,7 +6214,6 @@ i965_encoder_vp8_pak_tpu(VADriverContextP ctx,
     gpe->setup_interface_data(ctx, gpe_context);
 
     memset(&media_object_param, 0, sizeof(media_object_param));
-    printf("tpu kernel\n");
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 }
 
