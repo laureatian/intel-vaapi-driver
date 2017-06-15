@@ -3174,7 +3174,7 @@ i965_encoder_vp8_vme_mbenc_set_i_frame_curbe(VADriverContextP ctx,
         return;
 
     memset(pcmd, 0, sizeof(*pcmd));
-
+    printf("mbenc i frame kernel\n");
     pcmd->dw0.frame_width = vp8_context->frame_width;
     pcmd->dw0.frame_height = vp8_context->frame_height;
 
@@ -3407,7 +3407,7 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
     QUANT_INDEX(qp_seg1, 0, 0);
     QUANT_INDEX(qp_seg2, 0, 0);
     QUANT_INDEX(qp_seg3, 3, 0);
-
+    printf("mbenc p frame kernel\n");
     pcmd->dw0.frame_width = vp8_context->frame_width;
     pcmd->dw0.frame_height = vp8_context->frame_height;
 
@@ -4103,7 +4103,6 @@ i965_encoder_vp8_vme_mbenc(VADriverContextP ctx,
         kernel_walker_param.walker_degree = VP8_ENCODER_45_DEGREE;
 
     i965_init_media_object_walker_parameters(encoder_context, &kernel_walker_param, &media_object_walker_param);
-    printf("mbenc_kernel\n");
     i965_run_kernel_media_object_walker(ctx, encoder_context, gpe_context, media_function, &media_object_walker_param);
 
     return VA_STATUS_SUCCESS;
