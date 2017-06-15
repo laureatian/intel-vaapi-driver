@@ -4146,7 +4146,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
         return;
 
     memset(pcmd, 0, sizeof(*pcmd));
-
+    pcmd->dw1.target_size = vp8_context->brc_init_current_target_buf_full_in_bits;
     pcmd->dw2.picture_header_size = 0;
 
     pcmd->dw3.start_global_adjust_frame0 = 10;
