@@ -2450,8 +2450,8 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
     printf("target bit rate %d\n", vp8_context->target_bit_rate[num_layers - 1]);
     printf("max bit rate %d\n", vp8_context->max_bit_rate[temporal_id]);
     pcmd->dw4.max_bitrate = (vp8_context->max_bit_rate[temporal_id] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
-    pcmd->dw6.frame_rate_m = vp8_context->framerate[num_layers - 1].num;
-    pcmd->dw7.frame_rate_d = vp8_context->framerate[num_layers - 1].den;
+    pcmd->dw6.frame_rate_m = vp8_context->framerate[num_layers - 1].num * 100;
+    pcmd->dw7.frame_rate_d = vp8_context->framerate[num_layers - 1].den * 100;
     printf("framerate[num_layers1]%d,%d \n", vp8_context->framerate[num_layers - 1].num, vp8_context->framerate[num_layers - 1].den);
     pcmd->dw8.brc_flag = 0;
     pcmd->dw8.gop_minus1 = vp8_context->gop_size - 1;
@@ -2549,6 +2549,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer1 = (unsigned int) temp_bit_rate[1];
             pcmd->dw24.initbck_maxlevel_ratio_u8_layer2 = (unsigned int) temp_bit_rate[2];
             pcmd->dw25.initbck_maxlevel_ratio_u8_layer3 = (unsigned int) temp_bit_rate[3];
+            printf("temp_bit_rate0123 %d,%d,%d,%d\n", temp_bit_rate[0], temp_bit_rate[1], temp_bit_rate[2], temp_bit_rate[3]);
         }
     } else {
         pcmd->dw24.initbck_maxlevel_ratio_u8_layer0 = 0;
