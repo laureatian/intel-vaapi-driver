@@ -2608,7 +2608,7 @@ i965_encoder_vp8_vme_brc_init_reset(VADriverContextP ctx,
     gpe->setup_interface_data(ctx, gpe_context);
 
     memset(&media_object_param, 0, sizeof(media_object_param));
-    printf("brc_init_reset_kernel\n");
+    printf("brc init reset kernel\n");
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 
     return VA_STATUS_SUCCESS;
@@ -2776,7 +2776,7 @@ i965_encoder_vp8_vme_scaling(VADriverContextP ctx,
     kernel_walker_param.resolution_y = down_scaled_height_in_mbs * 2;
     kernel_walker_param.no_dependency = 1;
     i965_init_media_object_walker_parameters(encoder_context, &kernel_walker_param, &media_object_walker_param);
-    printf("scaling_kernel\n");
+    printf("scaling kernel\n");
     i965_run_kernel_media_object_walker(ctx, encoder_context, gpe_context, media_function, &media_object_walker_param);
 
     return VA_STATUS_SUCCESS;
@@ -3145,7 +3145,7 @@ i965_encoder_vp8_vme_me(VADriverContextP ctx,
     kernel_walker_params.resolution_y = down_scaled_height_in_mbs;
     kernel_walker_params.no_dependency = 1;
     i965_init_media_object_walker_parameters(encoder_context, &kernel_walker_params, &media_object_walker_param);
-    printf("me_kernel\n");
+    printf("me kernel\n");
     i965_run_kernel_media_object_walker(ctx, encoder_context, gpe_context, media_function, &media_object_walker_param);
 
     return VA_STATUS_SUCCESS;
@@ -4574,7 +4574,7 @@ i965_encoder_vp8_vme_brc_update(VADriverContextP ctx,
     gpe->setup_interface_data(ctx, gpe_context);
 
     memset(&media_object_param, 0, sizeof(media_object_param));
-    printf("brc_update_kernel\n");
+    printf("brc update kernel\n");
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 
     return VA_STATUS_SUCCESS;
@@ -4973,7 +4973,7 @@ i965_encoder_vp8_vme_mpu(VADriverContextP ctx,
 
     i965_encoder_vp8_vme_mpu_add_surfaces(ctx, encode_state, encoder_context, gpe_context);
     gpe->setup_interface_data(ctx, gpe_context);
-    printf("mpu_kernel\n");
+    printf("mpu kernel\n");
     memset(&media_object_param, 0, sizeof(media_object_param));
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 
@@ -6193,7 +6193,7 @@ i965_encoder_vp8_pak_tpu(VADriverContextP ctx,
     gpe->setup_interface_data(ctx, gpe_context);
 
     memset(&media_object_param, 0, sizeof(media_object_param));
-    printf("tpu_kernel\n");
+    printf("tpu kernel\n");
     i965_run_kernel_media_object(ctx, encoder_context, gpe_context, media_function, &media_object_param);
 }
 
