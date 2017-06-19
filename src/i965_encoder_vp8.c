@@ -3462,7 +3462,9 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
     } else {
         pcmd->dw1.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
     }
-
+    printf("pframe main_ref %d\n", pcmd->dw1.main_ref);
+    printf("pframe ref_frame_ctrl %d\n", vp8_context->ref_frame_ctrl);
+    printf("pframe first_ref, second_ref %d,%d\n", first_ref, second_ref);
     pcmd->dw2.lambda_intra_segment0 = quant_dc_vp8[qp_seg0];
     pcmd->dw2.lambda_inter_segment0 = (quant_dc_vp8[qp_seg0] >> 2);
 
@@ -4163,7 +4165,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
         pcmd->dw5.target_size_flag = 1;
     }
 
-    pcmd->dw0.target_size = (unsigned int)vp8_context->brc_init_current_target_buf_full_in_bits;
+    pcmd->dw0.target_size = (unsigned long)vp8_context->brc_init_current_target_buf_full_in_bits;
 
     pcmd->dw5.curr_frame_type = is_intra ? 2 : 0;
     pcmd->dw5.brc_flag = 16 * vp8_context->internal_rate_mode;
@@ -5406,7 +5408,7 @@ i965_encoder_vp8_vme_var_init(VADriverContextP ctx,
     vp8_context->brc_distortion_buffer_supported = 1;
     vp8_context->brc_constant_buffer_supported = 1;
     vp8_context->repak_supported = 1;
-    vp8_context->multiple_pass_brc_supported = 0;
+    vp8_context->multiple_pass_brc_supported = 1;
     vp8_context->is_first_frame = 1;
     vp8_context->is_first_two_frame = 1;
     vp8_context->gop_size = 30;
