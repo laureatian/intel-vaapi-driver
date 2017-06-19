@@ -3459,12 +3459,12 @@ i965_encoder_vp8_vme_mbenc_set_p_frame_curbe(VADriverContextP ctx,
             }
         }
         pcmd->dw1.main_ref = main_ref;
+        printf("pframe first_ref, second_ref %d,%d\n", first_ref, second_ref);
     } else {
         pcmd->dw1.main_ref = mainref_table_vp8[vp8_context->ref_frame_ctrl];
     }
     printf("pframe main_ref %d\n", pcmd->dw1.main_ref);
     printf("pframe ref_frame_ctrl %d\n", vp8_context->ref_frame_ctrl);
-    printf("pframe first_ref, second_ref %d,%d\n", first_ref, second_ref);
     pcmd->dw2.lambda_intra_segment0 = quant_dc_vp8[qp_seg0];
     pcmd->dw2.lambda_inter_segment0 = (quant_dc_vp8[qp_seg0] >> 2);
 
