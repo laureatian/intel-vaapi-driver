@@ -2430,6 +2430,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
                                               struct i965_gpe_context *gpe_context)
 {
     struct i965_encoder_vp8_context *vp8_context = encoder_context->vme_context;
+    VAEncSequenceParameterBufferVP8 *seq_param = (VAEncSequenceParameterBufferVP8 *)encode_state->seq_param_ext->buffer;
     VAEncPictureParameterBufferVP8 *pic_param = (VAEncPictureParameterBufferVP8 *)encode_state->pic_param_ext->buffer;
     struct vp8_brc_init_reset_curbe_data *pcmd = i965_gpe_context_map_curbe(gpe_context);
     double input_bits_per_frame, bps_ratio;
@@ -2445,6 +2446,9 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
 
     printf("brc init reset kernel\n");
     pcmd->dw0.profile_level_max_frame = vp8_context->frame_width * vp8_context->frame_height;
+    printf("dw0.profile_level_max_frame%d \n", vp8_context->frame_width * vp8_context->frame_height);
+    printf("vp8_context->frame_width%d\n", vp8_context->frame_width);
+    printf("vp8_context->frame_height%d\n", vp8_context->frame_height);
     pcmd->dw1.init_buf_full_in_bits = vp8_context->init_vbv_buffer_fullness_in_bit;
     pcmd->dw2.buf_size_in_bits = vp8_context->vbv_buffer_size_in_bit;
     pcmd->dw3.average_bitrate = (vp8_context->target_bit_rate[num_layers - 1] + VP8_BRC_KBPS - 1) / VP8_BRC_KBPS * VP8_BRC_KBPS;
@@ -2494,6 +2498,8 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
 
     pcmd->dw9.frame_width_in_bytes = vp8_context->frame_width;
     pcmd->dw10.frame_height_in_bytes = vp8_context->frame_height;
+    pcmd->dw9.frame_width_in_bytes = seq_param->frame_width;
+    pcmd->dw10.frame_height_in_bytes = seq_param > frame_height;
     pcmd->dw10.avbr_accuracy = 30;
     pcmd->dw11.avbr_convergence = 150;
     pcmd->dw11.min_qp = pic_param->clamp_qindex_low;
