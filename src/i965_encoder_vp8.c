@@ -5028,7 +5028,7 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
     unsigned char hme_16x_enabled = vp8_context->hme_16x_enabled;
 
     if (brc_enabled) {
-        if (!vp8_context->brc_initted || vp8_context->brc_need_reset || (encoder_context->layer.num_layers > 1)) {
+        if (!vp8_context->brc_initted || vp8_context->brc_need_reset) {
             vp8_context->brc_initted = 1;
             i965_encoder_vp8_vme_brc_init_reset(ctx, encode_state, encoder_context);
         }
@@ -5415,7 +5415,7 @@ i965_encoder_vp8_vme_var_init(VADriverContextP ctx,
     vp8_context->brc_distortion_buffer_supported = 1;
     vp8_context->brc_constant_buffer_supported = 1;
     vp8_context->repak_supported = 1;
-    vp8_context->multiple_pass_brc_supported = 1;
+    vp8_context->multiple_pass_brc_supported = 0;
     vp8_context->is_first_frame = 1;
     vp8_context->is_first_two_frame = 1;
     vp8_context->gop_size = 30;
