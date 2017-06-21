@@ -1189,6 +1189,16 @@ print_out_log(void *ptr,
               int width,
               int height,
               int pitch);
+
+static void
+print_out_gpe_resource(struct i965_gpe_resource *gpe_resource,
+                       int raw,
+                       int offset,
+                       int dump,
+                       int width,
+                       int height,
+                       int pitch);
+
 void
 i965_encoder_vp8_check_motion_estimation(VADriverContextP ctx, struct intel_encoder_context *encoder_context)
 {
@@ -5034,6 +5044,15 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
         }
     }
 
+    print_out_gpe_resource(&vp8_context->brc_distortion_buffer,
+                           0,
+                           0,
+                           1,
+                           vp8_context->brc_distortion_buffer.width,
+                           vp8_context->brc_distortion_buffer.height,
+                           vp8_context->brc_distortion_buffer.pitch);
+
+
     if (scaling_enabled) {
         i965_encoder_vp8_vme_scaling(ctx, encode_state, encoder_context, 0);
 
@@ -6546,4 +6565,38 @@ print_out_curbe(void *cmd_ptr,
     print_out_log(cmd_ptr, cmd_size, NULL, 0, 0, 0, 0);
 }
 
+static void
+print_out_gpe_resource(struct i965_gpe_resource *gpe_resource,
+                       int raw,
+                       int offset,
+                       int dump,
+                       int width,
+                       int height,
+                       int pitch)
+{
+    unsigned int tiling, swizzle;
+    void *ptr = NULL;
+    int size = 0;
 
+    dri_bo_get_tiling(gpe_resource->bo, &tiling, &swizzle);
+
+    if (tiling != I915_TILING_NONE)
+        drm_intel_gem_bo_map_gtt(gpe_resource->bo);
+    else
+        dri_bo_map(gpe_resource->bo, 1);
+
+    ptr = (void *)gpe_resource->bo->virtual + offset;
+    size = gpe_resource->size - offset;
+
+    if (dump)
+        print_out_log(ptr, size, "gpe_resource.data", raw, width, height, pitch);
+    else
+        print_out_log(ptr, size, NULL, raw, width, height, pitch);
+
+    printf("%s : dump gpe resource size %d\n", __FUNCTION__, size);
+
+    if (tiling != I915_TILING_NONE)
+        drm_intel_gem_bo_unmap_gtt(gpe_resource->bo);
+    else
+        dri_bo_unmap(gpe_resource->bo);
+}
