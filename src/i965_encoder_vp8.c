@@ -1197,7 +1197,8 @@ print_out_gpe_resource(struct i965_gpe_resource *gpe_resource,
                        int dump,
                        int width,
                        int height,
-                       int pitch);
+                       int pitch,
+                       char *name);
 
 void
 i965_encoder_vp8_check_motion_estimation(VADriverContextP ctx, struct intel_encoder_context *encoder_context)
@@ -5050,8 +5051,17 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
                            1,
                            vp8_context->brc_distortion_buffer.width,
                            vp8_context->brc_distortion_buffer.height,
-                           vp8_context->brc_distortion_buffer.pitch);
+                           vp8_context->brc_distortion_buffer.pitch,
+                           "brc_init_reset_brc_distorsion_buffer");
 
+    print_out_gpe_resource(&vp8_context->brc_history_buffer,
+                           0,
+                           0,
+                           1,
+                           vp8_context->brc_history_buffer.width,
+                           vp8_context->brc_history_buffer.height,
+                           vp8_context->brc_history_buffer.pitch,
+                           "brc_ini_reset_brc_history_buffer");
 
     if (scaling_enabled) {
         i965_encoder_vp8_vme_scaling(ctx, encode_state, encoder_context, 0);
@@ -5073,6 +5083,45 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
         }
 
         i965_encoder_vp8_vme_brc_update(ctx, encode_state, encoder_context);
+
+        print_out_gpe_resource(&vp8_context->brc_history_buffer,
+                               0,
+                               0,
+                               1,
+                               vp8_context->brc_history_buffer.width,
+                               vp8_context->brc_history_buffer.height,
+                               vp8_context->brc_history_buffer.pitch,
+                               "brc_update_history_buffer");
+
+        print_out_gpe_resource(&vp8_context->brc_pak_statistics_buffer.width,
+                               0,
+                               0,
+                               1,
+                               vp8_context->brc_pak_statistics_buffer.width,
+                               vp8_context->brc_pak_statistics_buffer.height,
+                               vp8_context->brc_pak_statistics_buffer.pitch,
+                               "brc_update_brc_pak_statistics_buffer");
+
+        print_out_gpe_resource(&vp8_context->brc_vp8_cfg_command_write_buffer,
+                               0,
+                               0,
+                               1,
+                               vp8_context->brc_vp8_cfg_command_write_buffer.width,
+                               vp8_context->brc_vp8_cfg_command_write_buffer.height,
+                               vp8_context->brc_vp8_cfg_command_write_buffer.pitch,
+                               "brc_update_brc_vp8_cfg_command_write_buffer");
+
+        print_out_gpe_resource(&vp8_context->brc_vp8_constant_data_buffer,
+                               0,
+                               0,
+                               1,
+                               vp8_context->brc_vp8_constant_data_buffer.width,
+                               vp8_context->brc_vp8_constant_data_buffer.height,
+                               vp8_context->brc_vp8_constant_data_buffer.pitch,
+                               "brc_update_brc_vp8_constant_data_buffer");
+
+
+
     }
 
     vp8_context->brc_initted = 1;
@@ -6572,7 +6621,8 @@ print_out_gpe_resource(struct i965_gpe_resource *gpe_resource,
                        int dump,
                        int width,
                        int height,
-                       int pitch)
+                       int pitch,
+                       char *name)
 {
     unsigned int tiling, swizzle;
     void *ptr = NULL;
@@ -6589,7 +6639,7 @@ print_out_gpe_resource(struct i965_gpe_resource *gpe_resource,
     size = gpe_resource->size - offset;
 
     if (dump)
-        print_out_log(ptr, size, "gpe_resource.data", raw, width, height, pitch);
+        print_out_log(ptr, size, name, raw, width, height, pitch);
     else
         print_out_log(ptr, size, NULL, raw, width, height, pitch);
 
