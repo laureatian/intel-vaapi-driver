@@ -5093,7 +5093,7 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
                                vp8_context->brc_history_buffer.pitch,
                                "brc_update_history_buffer");
 
-        print_out_gpe_resource(&vp8_context->brc_pak_statistics_buffer.width,
+        /* print_out_gpe_resource(&vp8_context->brc_pak_statistics_buffer,
                                0,
                                0,
                                1,
@@ -5101,7 +5101,7 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
                                vp8_context->brc_pak_statistics_buffer.height,
                                vp8_context->brc_pak_statistics_buffer.pitch,
                                "brc_update_brc_pak_statistics_buffer");
-
+        */
         print_out_gpe_resource(&vp8_context->brc_vp8_cfg_command_write_buffer,
                                0,
                                0,
