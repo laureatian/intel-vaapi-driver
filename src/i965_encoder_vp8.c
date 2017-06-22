@@ -5080,6 +5080,14 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
         if (is_intra) {
             i965_encoder_vp8_vme_mbenc(ctx, encode_state, encoder_context, 0, 1);
         }
+        print_out_gpe_resource(&vp8_context->brc_history_buffer,
+                               0,
+                               0,
+                               1,
+                               vp8_context->brc_history_buffer.width,
+                               vp8_context->brc_history_buffer.height,
+                               vp8_context->brc_history_buffer.pitch,
+                               "brc_update_history_read_buffer");
 
         i965_encoder_vp8_vme_brc_update(ctx, encode_state, encoder_context);
 
@@ -5090,7 +5098,7 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
                                vp8_context->brc_history_buffer.width,
                                vp8_context->brc_history_buffer.height,
                                vp8_context->brc_history_buffer.pitch,
-                               "brc_update_history_buffer");
+                               "brc_update_history_write_buffer");
 
         /* print_out_gpe_resource(&vp8_context->brc_pak_statistics_buffer,
                                0,
