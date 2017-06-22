@@ -2576,7 +2576,7 @@ i965_encoder_vp8_vme_brc_init_reset_set_curbe(VADriverContextP ctx,
         pcmd->dw24.initbck_maxlevel_ratio_u8_layer2 = 0;
         pcmd->dw25.initbck_maxlevel_ratio_u8_layer3 = 0;
     }
-    if (vp8_context->brc_initted) {
+    if (!vp8_context->brc_initted) {
         vp8_context->brc_init_current_target_buf_full_in_bits = pcmd->dw1.init_buf_full_in_bits;
     }
 
@@ -5040,7 +5040,6 @@ i965_encoder_vp8_vme_gpe_kernel_function(VADriverContextP ctx,
 
     if (brc_enabled) {
         if (!vp8_context->brc_initted || vp8_context->brc_need_reset) {
-            vp8_context->brc_initted = 1;
             i965_encoder_vp8_vme_brc_init_reset(ctx, encode_state, encoder_context);
         }
     }
