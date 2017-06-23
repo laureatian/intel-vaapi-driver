@@ -6413,6 +6413,9 @@ i965_encoder_vp8_pak_pipeline(VADriverContextP ctx,
         i965_encoder_vp8_pak_picture_level(ctx, encode_state, encoder_context);
         i965_encoder_vp8_pak_slice_level(ctx, encode_state, encoder_context);
 
+        printf("vp8_conetext->curr_pass%d\n", vp8_context->curr_pass);
+        printf("vp8_context->submit_batchbuffer%d\n", vp8_context->submit_batchbuffer);
+        printf("vp8_context->tpu_required%d\n", vp8_context->tpu_required);
         if (vp8_context->submit_batchbuffer) {
             intel_batchbuffer_end_atomic(batch);
             intel_batchbuffer_flush(batch);
