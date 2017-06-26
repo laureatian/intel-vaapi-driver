@@ -5860,9 +5860,9 @@ i965_encoder_vp8_pak_insert_batch_buffers(VADriverContextP ctx, struct intel_enc
         } else {
 
             if (vp8_context->repak_pass_iter_val == vp8_context->curr_pass)
-                batch_param.offset = 0;
-            else
                 batch_param.offset = vp8_context->curr_pass * VP8_BRC_IMG_STATE_SIZE_PER_PASS;
+            else
+                batch_param.offset = 0;
         }
 
         gpe->mi_batch_buffer_start(ctx, batch, &batch_param);
