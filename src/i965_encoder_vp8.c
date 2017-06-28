@@ -4128,7 +4128,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
         return;
 
     memset(pcmd, 0, sizeof(*pcmd));
-    pcmd->dw1.target_size = vp8_context->brc_init_current_target_buf_full_in_bits;
+    pcmd->dw0.target_size = vp8_context->brc_init_current_target_buf_full_in_bits;
     pcmd->dw2.picture_header_size = 0;
 
     pcmd->dw3.start_global_adjust_frame0 = 10;
@@ -4144,7 +4144,7 @@ i965_encoder_vp8_vme_brc_update_set_curbe(VADriverContextP ctx,
         pcmd->dw5.target_size_flag = 1;
     }
 
-    pcmd->dw0.target_size = (unsigned int)vp8_context->brc_init_current_target_buf_full_in_bits;
+    pcmd->dw0.target_size = (unsigned long)vp8_context->brc_init_current_target_buf_full_in_bits;
 
     pcmd->dw5.curr_frame_type = is_intra ? 2 : 0;
     pcmd->dw5.brc_flag = 16 * vp8_context->internal_rate_mode;

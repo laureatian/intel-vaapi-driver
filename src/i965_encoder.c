@@ -764,6 +764,7 @@ intel_encoder_check_temporal_layer_structure(VADriverContextP ctx,
         return VA_STATUS_SUCCESS;
     }
 
+    encoder_context->layer.curr_frame_layer_id = 0;
     if (!(rate_control_mode & (VA_RC_CBR | VA_RC_VBR)))
         return VA_STATUS_SUCCESS;
 
