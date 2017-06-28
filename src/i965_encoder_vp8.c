@@ -2284,7 +2284,7 @@ i965_encoder_vp8_get_misc_parameters(VADriverContextP ctx,
             vp8_context->init_vbv_buffer_fullness_in_bit = encoder_context->brc.hrd_initial_buffer_fullness;
             for (i = 0; i < encoder_context->layer.num_layers; i++) {
                 vp8_context->framerate[i] = encoder_context->brc.framerate[i];
-                vp8_context->max_bit_rate[i] = encoder_context->brc.bits_per_second[i]; // currently only one layer is supported
+                vp8_context->max_bit_rate[i] = encoder_context->brc.bits_per_second[i];
                 vp8_context->brc_need_reset = (vp8_context->brc_initted && encoder_context->brc.need_reset);
 
                 if (vp8_context->internal_rate_mode == I965_BRC_CBR) {
