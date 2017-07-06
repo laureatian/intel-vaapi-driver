@@ -2410,8 +2410,8 @@ struct vp8_encode_status {
     uint32_t bitstream_byte_count_per_frame;
     uint32_t pad0;
     uint32_t image_status_mask;
-    struct vp8_vdbox_image_status_control image_status_ctrl;
     uint32_t pad1;
+    struct vp8_vdbox_image_status_control image_status_ctrl;
     uint32_t pad2;
 };
 
