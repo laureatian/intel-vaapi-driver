@@ -1,3 +1,36 @@
+/*
+ * Copyright @ 2017 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL PRECISION INSIGHT AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWAR OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Tiantian Wang <tiantian.wang@intel.com>
+ *
+ */
+
+#ifndef GEN8_AVC_ENCODER_H
+#define GEN8_AVC_ENCODER_H
+
+#include "i965_encoder_common.h"
+
 typedef struct _gen8_avc_encoder_kernel_header {
     int nKernelCount;
 
@@ -365,7 +398,7 @@ typedef struct _gen8_avc_mbenc_curbe_data {
         uint32_t num_ref_idx_l0_minus_one: 8;
         uint32_t hme_combined_extra_sus: 8;
         uint32_t num_ref_idx_l1_minus_one: 8;
-        uint32_t enablE_cabac_work_around: 1;
+        uint32_t enable_cabac_work_around: 1;
         uint32_t reserved0: 4;
         uint32_t is_fwd_frame_short_term_ref: 1;
         uint32_t check_all_fractional_enable: 1;
@@ -909,4 +942,228 @@ typedef struct _gen8_avc_me_curbe_data {
         uint32_t reserved;
     } dw38;
 } gen8_avc_me_curbe_data;
+
+typedef struct _gen8_avc_frame_brc_update_curbe_data {
+    struct {
+        uint32_t target_size;
+    } dw0;
+
+    struct {
+        uint32_t frame_number;
+    } dw1;
+
+    struct {
+        uint32_t size_of_pic_headers;
+    } dw2;
+
+    struct {
+        uint32_t start_gadj_frame0: 16;
+        uint32_t start_gadj_frame1: 16;
+    } dw3;
+
+    struct {
+        uint32_t start_gadj_frame2: 16;
+        uint32_t start_gadj_frame3: 16;
+    } dw4;
+
+    struct {
+        uint32_t target_size_flag: 8;
+        uint32_t brc_flag: 8;
+        uint32_t max_num_paks: 8;
+        uint32_t cur_frame_type: 8;
+    } dw5;
+
+    struct {
+        uint32_t num_skip_frames: 8;
+        uint32_t minimum_qp: 8;
+        uint32_t maximum_qp: 8;
+        uint32_t widi_intra_refresh_mode: 8;
+    } dw6;
+
+    struct {
+        uint32_t size_skip_frames;
+    } dw7;
+
+    struct {
+        uint32_t start_global_adjust_mult_0: 8;
+        uint32_t start_global_adjust_mult_1: 8;
+        uint32_t start_global_adjust_mult_2: 8;
+        uint32_t start_global_adjust_mult_3: 8;
+    } dw8;
+
+    struct {
+        uint32_t start_global_adjust_mult_4: 8;
+        uint32_t start_global_adjust_div_0: 8;
+        uint32_t start_global_adjust_div_1: 8;
+        uint32_t start_global_adjust_div_2: 8;
+    } dw9;
+
+    struct {
+        uint32_t start_global_adjust_div_3: 8;
+        uint32_t start_global_adjust_div_4: 8;
+        uint32_t qp_threshold_0: 8;
+        uint32_t qp_threshold_1: 8;
+    } dw10;
+
+    struct {
+        uint32_t qp_threshold_2: 8;
+        uint32_t qp_threshold_3: 8;
+        uint32_t g_rate_ratio_threshold_0: 8;
+        uint32_t g_rate_ratio_threshold_1: 8;
+    } dw11;
+
+    struct {
+        uint32_t g_rate_ratio_threshold_2: 8;
+        uint32_t g_rate_ratio_threshold_3: 8;
+        uint32_t g_rate_ratio_threshold_4: 8;
+        uint32_t g_rate_ratio_threshold_5: 8;
+    } dw12;
+
+    struct {
+        uint32_t g_rate_ratio_threshold_qp_0: 8;
+        uint32_t g_rate_ratio_threshold_qp_1: 8;
+        uint32_t g_rate_ratio_threshold_qp_2: 8;
+        uint32_t g_rate_ratio_threshold_qp_3: 8;
+    } dw13;
+
+    struct {
+        uint32_t g_rate_ratio_threshold_qp_4: 8;
+        uint32_t g_rate_ratio_threshold_qp_5: 8;
+        uint32_t g_rate_ratio_threshold_qp_6: 8;
+        uint32_t qp_index_of_cur_pic: 8;
+    } dw14;
+
+    struct {
+        uint32_t widi_qp_intra_resresh: 8;
+        uint32_t reserved0: 8;
+    } dw15;
+
+    struct {
+        uint32_t widi_intra_refresh_y_pos: 16;
+        uint32_t widi_intra_refresh_x_pos: 16;
+    } dw16;
+
+    struct {
+        uint32_t widi_intra_refresh_height: 16;
+        uint32_t widi_intra_refresh_width: 16;
+    } dw17;
+} gen8_avc_frame_brc_update_curbe_data;
+
+typedef struct _gen8_avc_scaling4x_curbe_data {
+    struct {
+        uint32_t   input_picture_width  : 16;
+        uint32_t   input_picture_height : 16;
+    } dw0;
+
+    struct {
+        uint32_t   input_y_bti_frame;
+    } dw1;
+
+    struct {
+        uint32_t   output_y_bti_frame;
+    } dw2;
+
+    struct {
+        uint32_t   input_y_bti_bottom_field;
+    } dw3;
+
+    struct {
+        uint32_t   output_y_bti_bottom_field;
+    } dw4;
+
+    struct {
+        uint32_t flatness_threshold;
+    } dw5;
+
+    struct {
+        uint32_t enable_mb_flatness_check: 1;
+        uint32_t enable_mb_variance_output: 1;
+        uint32_t enable_mb_pixel_average_output: 1;
+        uint32_t enable_block8x8_statistics_output: 1;
+        uint32_t reserved0: 28;
+    } dw6;
+
+    struct {
+        uint32_t reserved;
+    } dw7;
+
+    struct {
+        uint32_t flatness_output_bti_top_field;
+    } dw8;
+
+    struct {
+        uint32_t flatness_output_bti_bottom_field;
+    } dw9;
+
+    struct {
+        uint32_t mbv_proc_states_bti_top_field;
+    } dw10;
+
+    struct {
+        uint32_t mbv_proc_states_bti_bottom_field;
+    } dw11;
+} gen8_avc_scaling4x_curbe_data;
+
+typedef enum _gen8_avc_binding_table_offset_mbenc {
+    GEN8_AVC_MBENC_MFC_AVC_PAK_OBJ_CM_G8                    =  0,
+    GEN8_AVC_MBENC_IND_MV_DATA_CM_G8                        =  1,
+    GEN8_AVC_MBENC_BRC_DISTORTION_CM_G8                     =  2,    // For BRC distortion for I
+    GEN8_AVC_MBENC_CURR_Y_CM_G8                             =  3,
+    GEN8_AVC_MBENC_CURR_UV_CM_G8                            =  4,
+    GEN8_AVC_MBENC_MB_SPECIFIC_DATA_CM_G8                   =  5,
+    GEN8_AVC_MBENC_AUX_VME_OUT_CM_G8                        =  6,
+    GEN8_AVC_MBENC_REFPICSELECT_L0_CM_G8                    =  7,
+    GEN8_AVC_MBENC_MV_DATA_FROM_ME_CM_G8                    =  8,
+    GEN8_AVC_MBENC_4xME_DISTORTION_CM_G8                    =  9,
+    GEN8_AVC_MBENC_SLICEMAP_DATA_CM_G8                      = 10,
+    GEN8_AVC_MBENC_FWD_MB_DATA_CM_G8                        = 11,
+    GEN8_AVC_MBENC_FWD_MV_DATA_CM_G8                        = 12,
+    GEN8_AVC_MBENC_MBQP_CM_G8                               = 13,
+    GEN8_AVC_MBENC_MBBRC_CONST_DATA_CM_G8                   = 14,
+    GEN8_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_0_CM_G8      = 15,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX0_CM_G8        = 16,
+    GEN8_AVC_MBENC_VME_INTER_PRED_BWD_PIC_IDX0_0_CM_G8      = 17,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX1_CM_G8        = 18,
+    GEN8_AVC_MBENC_VME_INTER_PRED_BWD_PIC_IDX1_0_CM_G8      = 19,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX2_CM_G8        = 20,
+    GEN8_AVC_MBENC_RESERVED0_CM_G8                          = 21,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX3_CM_G8        = 22,
+    GEN8_AVC_MBENC_RESERVED1_CM_G8                          = 23,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX4_CM_G8        = 24,
+    GEN8_AVC_MBENC_RESERVED2_CM_G8                          = 25,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX5_CM_G8        = 26,
+    GEN8_AVC_MBENC_RESERVED3_CM_G8                          = 27,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX6_CM_G8        = 28,
+    GEN8_AVC_MBENC_RESERVED4_CM_G8                          = 29,
+    GEN8_AVC_MBENC_VME_INTER_PRED_FWD_PIC_IDX7_CM_G8        = 30,
+    GEN8_AVC_MBENC_RESERVED5_CM_G8                          = 31,
+    GEN8_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_1_CM_G8      = 32,
+    GEN8_AVC_MBENC_VME_INTER_PRED_BWD_PIC_IDX0_1_CM_G8      = 33,
+    GEN8_AVC_MBENC_RESERVED6_CM_G8                          = 34,
+    GEN8_AVC_MBENC_VME_INTER_PRED_BWD_PIC_IDX1_1_CM_G8      = 35,
+    GEN8_AVC_MBENC_RESERVED7_CM_G8                          = 36,
+    GEN8_AVC_MBENC_FLATNESS_CHECK_CM_G8                     = 37,
+    GEN8_AVC_MBENC_MAD_DATA_CM_G8                           = 38,
+    GEN8_AVC_MBENC_FORCE_NONSKIP_MB_MAP_CM_G8               = 39,
+    GEN8_AVC_MBENC_WIDI_WA_DATA_CM_G8                       = 40,
+    GEN8_AVC_MBENC_BRC_CURBE_DATA_CM_G8                     = 41,
+    GEN8_AVC_MBENC_STATIC_FRAME_DETECTION_OUTPUT_CM_G8      = 42,
+    GEN8_AVC_MBENC_NUM_SURFACES_CM_G8                       = 43
+} gen8_avc_binding_table_offset_mbenc;
+
+typedef enum _gen8_avc_binding_table_offset_scaling {
+    GEN8_SCALING_FRAME_SRC_Y_CM                 = 0,
+    GEN8_SCALING_FRAME_DST_Y_CM                 = 1,
+    GEN8_SCALING_FIELD_TOP_SRC_Y_CM             = 0,
+    GEN8_SCALING_FIELD_TOP_DST_Y_CM             = 1,
+    GEN8_SCALING_FIELD_BOT_SRC_Y_CM             = 2,
+    GEN8_SCALING_FIELD_BOT_DST_Y_CM             = 3,
+    GEN8_SCALING_FRAME_FLATNESS_DST_CM          = 4,
+    GEN8_SCALING_FIELD_TOP_FLATNESS_DST_CM      = 4,
+    GEN8_SCALING_FIELD_BOT_FLATNESS_DST_CM      = 5,
+    GEN8_SCALING_FRAME_MBVPROCSTATS_DST_CM      = 6,
+    GEN8_SCALING_FIELD_TOP_MBVPROCSTATS_DST_CM  = 6,
+    GEN8_SCALING_FIELD_BOT_MBVPROCSTATS_DST_CM  = 7,
+    GEN8_SCALING_NUM_SURFACES_CM                = 8
+} gen8_avc_binding_table_offset_scaling;
 
