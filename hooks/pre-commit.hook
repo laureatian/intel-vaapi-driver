@@ -20,7 +20,7 @@ for file in `git diff-index --cached --name-only --diff-filter=ACMR HEAD src/ | 
     $ASTYLE $ASTYLE_PARAMS < ${tmp0file} > ${tmp1file} 2> /dev/null
     diff -up "${tmp0file}" "${tmp1file}"
     ret=$?
-    rm -f "${tmp0file}" "${tmp1file}"
+#    rm -f "${tmp0file}" "${tmp1file}"
     if [ $ret != 0 ]; then
 echo ""
 echo "**************************************************************************"
