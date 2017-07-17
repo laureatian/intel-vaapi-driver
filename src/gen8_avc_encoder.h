@@ -659,290 +659,6 @@ typedef struct _gen8_avc_mbenc_curbe_data {
 
 } gen8_avc_mbenc_curbe_data;
 
-typedef struct _gen8_avc_me_curbe_data {
-    struct {
-        uint32_t skip_mode_enable: 1;
-        uint32_t adaptive_enable: 1;
-        uint32_t bi_mix_dis: 1;
-        uint32_t reserved0: 2;
-        uint32_t early_ime_success_enable: 1;
-        uint32_t reserved1: 1;
-        uint32_t t8x8_flag_for_inter_enable: 1;
-        uint32_t reserved2: 16;
-        uint32_t early_ime_stop: 8;
-    } dw0;
-
-    struct {
-        uint32_t max_num_mvs: 6;
-        uint32_t reserved0: 10;
-        uint32_t bi_weight: 6;
-        uint32_t reserved1: 6;
-        uint32_t uni_mix_disable: 1;
-        uint32_t reserved2: 3;
-    } dw1;
-
-    struct {
-        uint32_t len_sp: 8;
-        uint32_t max_num_su: 8;
-        uint32_t picture_wicth: 16;
-    } dw2;
-
-    struct {
-        uint32_t src_size: 2;
-        uint32_t reserved0: 2;
-        uint32_t mb_type_remap: 2;
-        uint32_t src_access: 1;
-        uint32_t ref_access: 1;
-        uint32_t search_ctrl: 3;
-        uint32_t dual_search_path_option: 1;
-        uint32_t sub_pel_mode: 2;
-        uint32_t skip_type: 1;
-        uint32_t disable_field_cache_allocation: 1;
-        uint32_t inter_chroma_mode: 1;
-        uint32_t ft_enable: 1;
-        uint32_t bme_disable_fbr: 1;
-        uint32_t block_based_skip_enable: 1;
-        uint32_t inter_sad: 2;
-        uint32_t intra_sad: 2;
-        uint32_t sub_mb_part_mask: 7;
-        uint32_t reserved1: 1;
-    } dw3;
-
-    struct {
-        uint32_t picture_height_minus1: 16;
-        uint32_t mv_restriction_in_slice_enbale: 1;
-        uint32_t delta_mv_enable: 1;
-        uint32_t true_distortin_enable: 1;
-        uint32_t enable_wave_front_optimization: 1;
-        uint32_t reserved0: 1;
-        uint32_t enable_intra_cost_scaling_for_static_frame: 1;
-        uint32_t enable_intra_refresh: 1;
-        uint32_t enable_widi_wa_surf: 1;
-        uint32_t enable_widi_dirty_rect: 1;
-        uint32_t bcur_fld_idr: 1;
-        uint32_t constrained_intra_pred_flag: 1;
-        uint32_t filed_parity_flag: 1;
-        uint32_t hme_enable: 1;
-        uint32_t picture_type: 2;
-        uint32_t use_actual_ref_qp_value: 1;
-    } dw4;
-
-    struct {
-        uint32_t slice_mb_height: 16;
-        uint32_t ref_width: 8;
-        uint32_t ref_height: 8;
-    } dw5;
-
-    struct {
-        uint32_t batch_buffer_end;
-    } dw6;
-
-    struct {
-        uint32_t intra_part_mask: 5;
-        uint32_t non_skip_amv_added: 1;
-        uint32_t non_skip_mode_added: 1;
-        uint32_t luma_intra_src_corner_swap: 1;
-        uint32_t reserved0: 8;
-        uint32_t mv_cost_scale_factor: 2;
-        uint32_t bilinear_enable: 1;
-        uint32_t src_field_polarity: 1;
-        uint32_t weightedsad_harr: 1;
-        uint32_t ac_only_haar: 1;
-        uint32_t ref_id_cost_mode: 1;
-        uint32_t reserved1: 1;
-        uint32_t skip_center_mask: 8;
-    } dw7;
-
-    struct {
-        uint32_t mode_0_cost: 8;
-        uint32_t mode_1_cost: 8;
-        uint32_t mode_2_cost: 8;
-        uint32_t mode_3_cost: 8;
-    } dw8;
-
-    struct {
-        uint32_t mode_4_cost: 8;
-        uint32_t mode_5_cost: 8;
-        uint32_t mode_6_cost: 8;
-        uint32_t mode_7_cost: 8;
-    } dw9;
-
-    struct {
-        uint32_t mode_8_cost: 8;
-        uint32_t mode_9_cost: 8;
-        uint32_t ref_id_cost: 8;
-        uint32_t chroma_intra_mode_cost: 8;
-    } dw10;
-
-    struct {
-        uint32_t mv_0_cost: 8;
-        uint32_t mv_1_cost: 8;
-        uint32_t mv_2_cost: 8;
-        uint32_t mv_3_cost: 8;
-    } dw11;
-
-    struct {
-        uint32_t mv_4_cost: 8;
-        uint32_t mv_5_cost: 8;
-        uint32_t mv_6_cost: 8;
-        uint32_t mv_7_cost: 8;
-    } dw12;
-
-    struct {
-        uint32_t qp_prime_y: 8;
-        uint32_t qp_prime_cb: 8;
-        uint32_t qp_prime_cr: 8;
-        uint32_t target_size_in_word: 8;
-    } dw13;
-
-    struct {
-        uint32_t sic_fwd_trans_coeff_threshold0: 16;
-        uint32_t sic_fwd_trans_coeff_threshold1: 8;
-        uint32_t sic_fwd_trans_coeff_threshold2: 8;
-    } dw14;
-
-    struct {
-        uint32_t sic_fwd_trans_coeff_threshold3: 8;
-        uint32_t sic_fwd_trans_coeff_threshold4: 8;
-        uint32_t sic_fwd_trans_coeff_threshold5: 8;
-        uint32_t sic_fwd_trans_coeff_threshold6: 8;
-    } dw15;
-
-    struct {
-        struct generic_search_path_delta sp_delta_0;
-        struct generic_search_path_delta sp_delta_1;
-        struct generic_search_path_delta sp_delta_2;
-        struct generic_search_path_delta sp_delta_3;
-    } dw16;
-
-    struct {
-        struct generic_search_path_delta sp_delta_4;
-        struct generic_search_path_delta sp_delta_5;
-        struct generic_search_path_delta sp_delta_6;
-        struct generic_search_path_delta sp_delta_7;
-    } dw17;
-
-    struct {
-        struct generic_search_path_delta sp_delta_8;
-        struct generic_search_path_delta sp_delta_9;
-        struct generic_search_path_delta sp_delta_10;
-        struct generic_search_path_delta sp_delta_11;
-    } dw18;
-
-    struct {
-        struct generic_search_path_delta sp_delta_12;
-        struct generic_search_path_delta sp_delta_13;
-        struct generic_search_path_delta sp_delta_14;
-        struct generic_search_path_delta sp_delta_15;
-    } dw19;
-
-    struct {
-        struct generic_search_path_delta sp_delta_16;
-        struct generic_search_path_delta sp_delta_17;
-        struct generic_search_path_delta sp_delta_18;
-        struct generic_search_path_delta sp_delta_19;
-    } dw20;
-
-    struct {
-        struct generic_search_path_delta sp_delta_20;
-        struct generic_search_path_delta sp_delta_21;
-        struct generic_search_path_delta sp_delta_22;
-        struct generic_search_path_delta sp_delta_23;
-    } dw21;
-
-    struct {
-        struct generic_search_path_delta sp_delta_24;
-        struct generic_search_path_delta sp_delta_25;
-        struct generic_search_path_delta sp_delta_26;
-        struct generic_search_path_delta sp_delta_27;
-    } dw22;
-
-    struct {
-        struct generic_search_path_delta sp_delta_28;
-        struct generic_search_path_delta sp_delta_29;
-        struct generic_search_path_delta sp_delta_30;
-        struct generic_search_path_delta sp_delta_31;
-    } dw23;
-
-    struct {
-        struct generic_search_path_delta sp_delta_32;
-        struct generic_search_path_delta sp_delta_33;
-        struct generic_search_path_delta sp_delta_34;
-        struct generic_search_path_delta sp_delta_35;
-    } dw24;
-
-    struct {
-        struct generic_search_path_delta sp_delta_36;
-        struct generic_search_path_delta sp_delta_37;
-        struct generic_search_path_delta sp_delta_38;
-        struct generic_search_path_delta sp_delta_39;
-    } dw25;
-
-    struct {
-        struct generic_search_path_delta sp_delta_40;
-        struct generic_search_path_delta sp_delta_41;
-        struct generic_search_path_delta sp_delta_42;
-        struct generic_search_path_delta sp_delta_43;
-    } dw26;
-
-    struct {
-        struct generic_search_path_delta sp_delta_44;
-        struct generic_search_path_delta sp_delta_45;
-        struct generic_search_path_delta sp_delta_46;
-        struct generic_search_path_delta sp_delta_47;
-    } dw27;
-
-    struct {
-        struct generic_search_path_delta sp_delta_48;
-        struct generic_search_path_delta sp_delta_49;
-        struct generic_search_path_delta sp_delta_50;
-        struct generic_search_path_delta sp_delta_51;
-    } dw28;
-
-    struct {
-        struct generic_search_path_delta sp_delta_52;
-        struct generic_search_path_delta sp_delta_53;
-        struct generic_search_path_delta sp_delta_54;
-        struct generic_search_path_delta sp_delta_55;
-    } dw29;
-
-    struct {
-        uint32_t reserved;
-    } dw30;
-
-    struct {
-        uint32_t reserved;
-    } dw31;
-
-    struct {
-        uint32_t _4x_me_output_data_surf_index;
-    } dw32;
-
-    struct {
-        uint32_t _16xor32xme_input_data_surf_index;
-    } dw33;
-    struct {
-        uint32_t _4x_me_output_dist_surf_index;
-    } dw34;
-
-    struct {
-        uint32_t _4x_me_output_brc_dist_surf_index;
-    } dw35;
-
-    struct {
-        uint32_t vme_fwd_inter_pred_surf_index;
-    } dw36;
-
-    struct {
-        uint32_t vme_bdw_inter_pred_surf_index;
-    } dw37;
-
-    /* reserved */
-    struct {
-        uint32_t reserved;
-    } dw38;
-} gen8_avc_me_curbe_data;
-
 typedef struct _gen8_avc_frame_brc_update_curbe_data {
     struct {
         uint32_t target_size;
@@ -1167,3 +883,316 @@ typedef enum _gen8_avc_binding_table_offset_scaling {
     GEN8_SCALING_NUM_SURFACES_CM                = 8
 } gen8_avc_binding_table_offset_scaling;
 
+typedef struct _gen8_avc_me_curbe_data {
+    struct {
+        uint32_t skip_mode_enable: 1;
+        uint32_t adaptive_enable: 1;
+        uint32_t bi_mix_dis: 1;
+        uint32_t reserved0: 2;
+        uint32_t early_ime_success_enable: 1;
+        uint32_t reserved1: 1;
+        uint32_t t8x8_flag_for_inter_enable: 1;
+        uint32_t reserved2: 16;
+        uint32_t early_ime_stop: 8;
+    } dw0;
+
+    struct {
+        uint32_t max_num_mvs: 6;
+        uint32_t reserved0: 10;
+        uint32_t bi_weight: 6;
+        uint32_t reserved1: 6;
+        uint32_t uni_mix_disable: 1;
+        uint32_t reserved2: 3;
+    } dw1;
+
+    struct {
+        uint32_t max_len_sp: 8;
+        uint32_t max_num_su: 8;
+        uint32_t reserved0: 16;
+    } dw2;
+
+    struct {
+        uint32_t src_size: 2;
+        uint32_t reserved0: 2;
+        uint32_t mb_type_remap: 2;
+        uint32_t src_access: 1;
+        uint32_t ref_access: 1;
+        uint32_t search_ctrl: 3;
+        uint32_t dual_search_path_option: 1;
+        uint32_t sub_pel_mode: 2;
+        uint32_t skip_type: 1;
+        uint32_t disable_field_cache_allocation: 1;
+        uint32_t inter_chroma_mode: 1;
+        uint32_t ft_enable: 1;
+        uint32_t bme_disable_fbr: 1;
+        uint32_t block_based_skip_enable: 1;
+        uint32_t inter_sad: 2;
+        uint32_t intra_sad: 2;
+        uint32_t sub_mb_part_mask: 7;
+        uint32_t reserved1: 1;
+    } dw3;
+
+    struct {
+        uint32_t reserved0: 8;
+        uint32_t picture_height_minus1: 8;
+        uint32_t picture_width: 8;
+        uint32_t reserved1: 8;
+    } dw4;
+
+    struct {
+        uint32_t reserved0: 8;
+        uint32_t qp_prime_y: 8;
+        uint32_t ref_width: 8;
+        uint32_t ref_height: 8;
+    } dw5;
+
+    struct {
+        uint32_t reserved0: 3;
+        uint32_t write_distortions: 1;
+        uint32_t use_mv_from_prev_step: 1;
+        uint32_t reserved1: 3;
+        uint32_t super_combine_dist: 8;
+        uint32_t max_vmvr: 16;
+    } dw6;
+
+    struct {
+        uint32_t reserved0: 16;
+        uint32_t mv_cost_scale_factor: 2;
+        uint32_t bilinear_enable: 1;
+        uint32_t src_field_polarity: 1;
+        uint32_t weightedsad_harr: 1;
+        uint32_t ac_only_haar: 1;
+        uint32_t ref_id_cost_mode: 1;
+        uint32_t reserved1: 1;
+        uint32_t skip_center_mask: 8;
+    } dw7;
+
+    struct {
+        uint32_t mode_0_cost: 8;
+        uint32_t mode_1_cost: 8;
+        uint32_t mode_2_cost: 8;
+        uint32_t mode_3_cost: 8;
+    } dw8;
+
+    struct {
+        uint32_t mode_4_cost: 8;
+        uint32_t mode_5_cost: 8;
+        uint32_t mode_6_cost: 8;
+        uint32_t mode_7_cost: 8;
+    } dw9;
+
+    struct {
+        uint32_t mode_8_cost: 8;
+        uint32_t mode_9_cost: 8;
+        uint32_t ref_id_cost: 8;
+        uint32_t chroma_intra_mode_cost: 8;
+    } dw10;
+
+    struct {
+        uint32_t mv_0_cost: 8;
+        uint32_t mv_1_cost: 8;
+        uint32_t mv_2_cost: 8;
+        uint32_t mv_3_cost: 8;
+    } dw11;
+
+    struct {
+        uint32_t mv_4_cost: 8;
+        uint32_t mv_5_cost: 8;
+        uint32_t mv_6_cost: 8;
+        uint32_t mv_7_cost: 8;
+    } dw12;
+
+    struct {
+        uint32_t num_ref_idx_l0_minus1: 8;
+        uint32_t num_ref_idx_l1_minus1: 8;
+        uint32_t actual_mb_width: 8;
+        uint32_t actual_mb_height: 8;
+    } dw13;
+
+    struct {
+        uint32_t l0_ref_id0_field_parity: 1;
+        uint32_t l0_ref_id1_field_parity: 1;
+        uint32_t l0_ref_id2_field_parity: 1;
+        uint32_t l0_ref_id3_field_parity: 1;
+        uint32_t l0_ref_id4_field_parity: 1;
+        uint32_t l0_ref_id5_field_parity: 1;
+        uint32_t l0_ref_id6_field_parity: 1;
+        uint32_t l0_ref_id7_field_parity: 1;
+        uint32_t l1_ref_id0_field_parity: 1;
+        uint32_t l1_ref_id1_field_parity: 1;
+        uint32_t reserved: 22;
+    } dw14;
+
+    struct {
+        uint32_t prev_mv_read_pos_factor : 8;
+        uint32_t mv_shift_factor : 8;
+        uint32_t reserved: 16;
+    } dw15;
+
+    struct {
+        struct generic_search_path_delta sp_delta_0;
+        struct generic_search_path_delta sp_delta_1;
+        struct generic_search_path_delta sp_delta_2;
+        struct generic_search_path_delta sp_delta_3;
+    } dw16;
+
+    struct {
+        struct generic_search_path_delta sp_delta_4;
+        struct generic_search_path_delta sp_delta_5;
+        struct generic_search_path_delta sp_delta_6;
+        struct generic_search_path_delta sp_delta_7;
+    } dw17;
+
+    struct {
+        struct generic_search_path_delta sp_delta_8;
+        struct generic_search_path_delta sp_delta_9;
+        struct generic_search_path_delta sp_delta_10;
+        struct generic_search_path_delta sp_delta_11;
+    } dw18;
+
+    struct {
+        struct generic_search_path_delta sp_delta_12;
+        struct generic_search_path_delta sp_delta_13;
+        struct generic_search_path_delta sp_delta_14;
+        struct generic_search_path_delta sp_delta_15;
+    } dw19;
+
+    struct {
+        struct generic_search_path_delta sp_delta_16;
+        struct generic_search_path_delta sp_delta_17;
+        struct generic_search_path_delta sp_delta_18;
+        struct generic_search_path_delta sp_delta_19;
+    } dw20;
+
+    struct {
+        struct generic_search_path_delta sp_delta_20;
+        struct generic_search_path_delta sp_delta_21;
+        struct generic_search_path_delta sp_delta_22;
+        struct generic_search_path_delta sp_delta_23;
+    } dw21;
+
+    struct {
+        struct generic_search_path_delta sp_delta_24;
+        struct generic_search_path_delta sp_delta_25;
+        struct generic_search_path_delta sp_delta_26;
+        struct generic_search_path_delta sp_delta_27;
+    } dw22;
+
+    struct {
+        struct generic_search_path_delta sp_delta_28;
+        struct generic_search_path_delta sp_delta_29;
+        struct generic_search_path_delta sp_delta_30;
+        struct generic_search_path_delta sp_delta_31;
+    } dw23;
+
+    struct {
+        struct generic_search_path_delta sp_delta_32;
+        struct generic_search_path_delta sp_delta_33;
+        struct generic_search_path_delta sp_delta_34;
+        struct generic_search_path_delta sp_delta_35;
+    } dw24;
+
+    struct {
+        struct generic_search_path_delta sp_delta_36;
+        struct generic_search_path_delta sp_delta_37;
+        struct generic_search_path_delta sp_delta_38;
+        struct generic_search_path_delta sp_delta_39;
+    } dw25;
+
+    struct {
+        struct generic_search_path_delta sp_delta_40;
+        struct generic_search_path_delta sp_delta_41;
+        struct generic_search_path_delta sp_delta_42;
+        struct generic_search_path_delta sp_delta_43;
+    } dw26;
+
+    struct {
+        struct generic_search_path_delta sp_delta_44;
+        struct generic_search_path_delta sp_delta_45;
+        struct generic_search_path_delta sp_delta_46;
+        struct generic_search_path_delta sp_delta_47;
+    } dw27;
+
+    struct {
+        struct generic_search_path_delta sp_delta_48;
+        struct generic_search_path_delta sp_delta_49;
+        struct generic_search_path_delta sp_delta_50;
+        struct generic_search_path_delta sp_delta_51;
+    } dw28;
+
+    struct {
+        struct generic_search_path_delta sp_delta_52;
+        struct generic_search_path_delta sp_delta_53;
+        struct generic_search_path_delta sp_delta_54;
+        struct generic_search_path_delta sp_delta_55;
+    } dw29;
+
+    struct {
+        uint32_t reserved0;
+    } dw30;
+
+    struct {
+        uint32_t reserved0;
+    } dw31;
+
+    struct {
+        uint32_t _4x_memv_output_data_surf_index;
+    } dw32;
+
+    struct {
+        uint32_t _16x_32x_memv_input_data_surf_index;
+    } dw33;
+
+    struct {
+        uint32_t _4x_me_output_dist_surf_index;
+    } dw34;
+
+    struct {
+        uint32_t _4x_me_output_brc_dist_surf_index;
+    } dw35;
+
+    struct {
+        uint32_t vme_fwd_inter_pred_surf_index;
+    } dw36;
+
+    struct {
+        uint32_t vme_bdw_inter_pred_surf_index;
+    } dw37;
+
+    /* reserved */
+    struct {
+        uint32_t reserved;
+    } dw38;
+} gen8_avc_me_curbe_data;
+
+typedef enum _gen8_avc_binding_table_offset_me {
+    GEN8_AVC_ME_MV_DATA_SURFACE_CM_G8       = 0,
+    GEN8_AVC_16xME_MV_DATA_SURFACE_CM_G8    = 1,
+    GEN8_AVC_32xME_MV_DATA_SURFACE_CM_G8    = 1,
+    GEN8_AVC_ME_DISTORTION_SURFACE_CM_G8    = 2,
+    GEN8_AVC_ME_BRC_DISTORTION_CM_G8        = 3,
+    GEN8_AVC_ME_RESERVED0_CM_G8             = 4,
+    GEN8_AVC_ME_CURR_FOR_FWD_REF_CM_G8      = 5,
+    GEN8_AVC_ME_FWD_REF_IDX0_CM_G8          = 6,
+    GEN8_AVC_ME_RESERVED1_CM_G8             = 7,
+    GEN8_AVC_ME_FWD_REF_IDX1_CM_G8          = 8,
+    GEN8_AVC_ME_RESERVED2_CM_G8             = 9,
+    GEN8_AVC_ME_FWD_REF_IDX2_CM_G8          = 10,
+    GEN8_AVC_ME_RESERVED3_CM_G8             = 11,
+    GEN8_AVC_ME_FWD_REF_IDX3_CM_G8          = 12,
+    GEN8_AVC_ME_RESERVED4_CM_G8             = 13,
+    GEN8_AVC_ME_FWD_REF_IDX4_CM_G8          = 14,
+    GEN8_AVC_ME_RESERVED5_CM_G8             = 15,
+    GEN8_AVC_ME_FWD_REF_IDX5_CM_G8          = 16,
+    GEN8_AVC_ME_RESERVED6_CM_G8             = 17,
+    GEN8_AVC_ME_FWD_REF_IDX6_CM_G8          = 18,
+    GEN8_AVC_ME_RESERVED7_CM_G8             = 19,
+    GEN8_AVC_ME_FWD_REF_IDX7_CM_G8          = 20,
+    GEN8_AVC_ME_RESERVED8_CM_G8             = 21,
+    GEN8_AVC_ME_CURR_FOR_BWD_REF_CM_G8      = 22,
+    GEN8_AVC_ME_BWD_REF_IDX0_CM_G8          = 23,
+    GEN8_AVC_ME_RESERVED9_CM_G8             = 24,
+    GEN8_AVC_ME_BWD_REF_IDX1_CM_G8          = 25,
+    GEN8_AVC_ME_RESERVED10_CM_G8            = 26,
+    GEN8_AVC_ME_NUM_SURFACES_CM_G8          = 27
+} gen8_avc_binding_table_offset_me;
