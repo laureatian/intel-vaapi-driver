@@ -777,26 +777,39 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                            (is_g95 ? GEN95_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX : GEN9_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX));
         }
 
-        if (avc_state->sfd_enable && generic_state->hme_enabled) {
-            if (generic_state->frame_type == SLICE_TYPE_P) {
-                gpe_resource = &(avc_ctx->res_sfd_cost_table_p_frame_buffer);
+        /*  if (avc_state->sfd_enable && generic_state->hme_enabled) {
+              if (generic_state->frame_type == SLICE_TYPE_P) {
+                  gpe_resource = &(avc_ctx->res_sfd_cost_table_p_frame_buffer);
 
-            } else if (generic_state->frame_type == SLICE_TYPE_B) {
-                gpe_resource = &(avc_ctx->res_sfd_cost_table_b_frame_buffer);
-            }
+              } else if (generic_state->frame_type == SLICE_TYPE_B) {
+                  gpe_resource = &(avc_ctx->res_sfd_cost_table_b_frame_buffer);
+              }
 
-            if (generic_state->frame_type != SLICE_TYPE_I) {
-                gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
-                                               gpe_resource,
-                                               1,
-                                               I965_SURFACEFORMAT_R8_UNORM,
-                                               (is_g95 ? GEN95_AVC_MBENC_SFD_COST_TABLE_INDEX : GEN9_AVC_MBENC_SFD_COST_TABLE_INDEX));
-            }
-        }
+              if (generic_state->frame_type != SLICE_TYPE_I) {
+                  gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
+                                                 gpe_resource,
+                                                 1,
+                                                 I965_SURFACEFORMAT_R8_UNORM,
+                                                 (is_g95 ? GEN95_AVC_MBENC_SFD_COST_TABLE_INDEX : GEN9_AVC_MBENC_SFD_COST_TABLE_INDEX));
+              }
+          }*/
+    }
+
+    if (avc_state->sfd_enable) {
+        size = 128 / sizeof(unsigned long);
+        gpe_resource = &(avc_ctx->res_sfd_output_buffer);
+        gen9_add_buffer_gpe_surface(ctx,
+                                    gpe_context,
+                                    gpe_resource,
+                                    0,
+                                    size / 4,
+                                    0,
+                                    GEN8_AVC_MBENC_STATIC_FRAME_DETECTION_OUTPUT_CM_G8);
     }
 
     return;
 }
+
 static void
 gen8_avc_set_curbe_scaling4x(VADriverContextP ctx,
                              struct encode_state *encode_state,
@@ -836,6 +849,55 @@ gen8_avc_set_curbe_scaling4x(VADriverContextP ctx,
     return;
 }
 
+static void
+gen8_avc_send_surface_scaling(VADriverContextP ctx,
+                              struct encode_state *encode_state,
+                              struct i965_gpe_context *gpe_context,
+                              struct intel_encoder_context *encoder_context,
+                              void *param)
+{
+    struct scaling_param *surface_param = (struct scaling_param *)param;
+    unsigned int surface_format;
+    unsigned int res_size;
+
+    if (surface_param->scaling_out_use_32unorm_surf_fmt)
+        surface_format = I965_SURFACEFORMAT_R32_UNORM;
+    else if (surface_param->scaling_out_use_16unorm_surf_fmt)
+        surface_format = I965_SURFACEFORMAT_R16_UNORM;
+    else
+        surface_format = I965_SURFACEFORMAT_R8_UNORM;
+
+    gen9_add_2d_gpe_surface(ctx, gpe_context,
+                            surface_param->input_surface,
+                            0, 1, surface_format,
+                            GEN9_AVC_SCALING_FRAME_SRC_Y_INDEX);
+
+    gen9_add_2d_gpe_surface(ctx, gpe_context,
+                            surface_param->output_surface,
+                            0, 1, surface_format,
+                            GEN9_AVC_SCALING_FRAME_DST_Y_INDEX);
+
+    /*add buffer mv_proc_stat, here need change*/
+    if (surface_param->mbv_proc_stat_enabled) {
+        res_size = 16 * (surface_param->input_frame_width / 16) * (surface_param->input_frame_height / 16) * sizeof(unsigned int);
+
+        gen9_add_buffer_gpe_surface(ctx,
+                                    gpe_context,
+                                    surface_param->pres_mbv_proc_stat_buffer,
+                                    0,
+                                    res_size / 4,
+                                    0,
+                                    GEN8_SCALING_FRAME_MBVPROCSTATS_DST_CM);
+    } else if (surface_param->enable_mb_flatness_check) {
+        gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
+                                       surface_param->pres_flatness_check_surface,
+                                       1,
+                                       I965_SURFACEFORMAT_R8_UNORM,
+                                       GEN8_SCALING_FRAME_MBVPROCSTATS_DST_CM);
+    }
+
+    return;
+}
 static void
 gen8_avc_set_curbe_me(VADriverContextP ctx,
                       struct encode_state *encode_state,
@@ -1281,4 +1343,50 @@ gen8_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
     i965_gpe_context_unmap_curbe(gpe_context);
 
     return;
+}
+
+
+static void
+gen8_avc_kernel_init(VADriverContextP ctx,
+                     struct intel_encoder_context *encoder_context)
+{
+    struct i965_driver_data *i965 = i965_driver_data(ctx);
+    struct encoder_vme_mfc_context * vme_context = (struct encoder_vme_mfc_context *)encoder_context->vme_context;
+    struct i965_avc_encoder_context * avc_ctx = (struct i965_avc_encoder_context *)vme_context->private_enc_ctx;
+    struct generic_encoder_context * generic_ctx = (struct generic_encoder_context *)vme_context->generic_enc_ctx;
+
+    gen9_avc_kernel_init_scaling(ctx, generic_ctx, &avc_ctx->context_scaling);
+    gen9_avc_kernel_init_brc(ctx, generic_ctx, &avc_ctx->context_brc);
+    gen9_avc_kernel_init_me(ctx, generic_ctx, &avc_ctx->context_me);
+    gen9_avc_kernel_init_mbenc(ctx, generic_ctx, &avc_ctx->context_mbenc);
+    gen9_avc_kernel_init_wp(ctx, generic_ctx, &avc_ctx->context_wp);
+    gen9_avc_kernel_init_sfd(ctx, generic_ctx, &avc_ctx->context_sfd);
+
+    //function pointer
+    generic_ctx->pfn_set_curbe_scaling2x = gen9_avc_set_curbe_scaling2x;
+    generic_ctx->pfn_set_curbe_scaling4x = gen8_avc_set_curbe_scaling4x;
+    generic_ctx->pfn_set_curbe_me = gen8_avc_set_curbe_me;
+    generic_ctx->pfn_set_curbe_mbenc = gen8_avc_set_curbe_mbenc;
+    generic_ctx->pfn_set_curbe_brc_init_reset = gen9_avc_set_curbe_brc_init_reset;
+    generic_ctx->pfn_set_curbe_brc_frame_update = gen8_avc_set_curbe_brc_frame_update;
+    //generic_ctx->pfn_set_curbe_brc_mb_update = gen9_avc_set_curbe_brc_mb_update;
+    generic_ctx->pfn_set_curbe_sfd = gen9_avc_set_curbe_sfd;
+    //generic_ctx->pfn_set_curbe_wp = gen9_avc_set_curbe_wp;
+
+    generic_ctx->pfn_send_scaling_surface = gen8_avc_send_surface_scaling;
+    generic_ctx->pfn_send_me_surface = gen8_avc_send_surface_me;
+    generic_ctx->pfn_send_mbenc_surface = gen8_avc_send_surface_mbenc;
+    generic_ctx->pfn_send_brc_init_reset_surface = gen9_avc_send_surface_brc_init_reset;
+    generic_ctx->pfn_send_brc_frame_update_surface = gen9_avc_send_surface_brc_frame_update;
+    //generic_ctx->pfn_send_brc_mb_update_surface = gen9_avc_send_surface_brc_mb_update;
+    generic_ctx->pfn_send_sfd_surface = gen9_avc_send_surface_sfd;
+    //generic_ctx->pfn_send_wp_surface = gen9_avc_send_surface_wp;
+
+    /*if (IS_SKL(i965->intel.device_info) ||
+        IS_BXT(i965->intel.device_info))
+        generic_ctx->pfn_set_curbe_scaling4x = gen9_avc_set_curbe_scaling4x;
+    else if (IS_KBL(i965->intel.device_info) ||
+             IS_GLK(i965->intel.device_info))
+        generic_ctx->pfn_set_curbe_scaling4x = gen95_avc_set_curbe_scaling4x;
+     */
 }
