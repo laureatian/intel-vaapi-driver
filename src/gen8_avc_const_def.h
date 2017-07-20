@@ -36,3 +36,6 @@
 
 #define GEN8_AVC_MBENC_CURBE_SIZE  88
 const unsigned int gen8_avc_mbenc_curbe_i_frame_dist_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+const unsigned int gen8_avc_mbenc_curbe_normal_i_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+const unsigned int gen8_avc_mbenc_curbe_normal_p_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+const unsigned int gen8_avc_mbenc_curbe_normal_b_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE]

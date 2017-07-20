@@ -29,13 +29,16 @@
 #ifndef _GEN8_AVC_ENCODER_KERNELS_H
 #define _GEN8_AVC_ENCODER_KERNELS_H
 
-#define AVC_ENC_CHV_SZ 96346
+//ao
+#define AVC_ENC_CHV_SZ  123116
 extern const unsigned int chv_avc_encoder_kernels[AVC_ENC_CHV_SZ];
 
-#define AVC_ENC_BDW_SZ 101994
+//cm
+#define AVC_ENC_BDW_SZ  95532
 extern const unsigned int bdw_avc_encoder_kernels[AVC_ENC_BDW_SZ];
 
-#define AVC_ENC_BSW_SZ 101994
+//normal
+#define AVC_ENC_BSW_SZ  123004
 extern const unsigned int bsw_avc_encoder_kernels[AVC_ENC_BSW_SZ];
 
 #endif//_GEN8_AVC_ENCODER_KERNELS_H
