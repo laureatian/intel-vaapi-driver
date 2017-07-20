@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef GEN9_AVC_const_DEF_H
-#define GEN9_AVC_const_DEF_H
+#ifndef GEN8_AVC_const_DEF_H
+#define GEN8_AVC_const_DEF_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,4 +38,5 @@
 const unsigned int gen8_avc_mbenc_curbe_i_frame_dist_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
 const unsigned int gen8_avc_mbenc_curbe_normal_i_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
 const unsigned int gen8_avc_mbenc_curbe_normal_p_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
-const unsigned int gen8_avc_mbenc_curbe_normal_b_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE]
+const unsigned int gen8_avc_mbenc_curbe_normal_b_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+#endif //GEN8_AVC_const_DEF_H

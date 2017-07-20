@@ -36,7 +36,7 @@ struct hw_context;
 
 /* H264/AVC */
 extern Bool
-gen9_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *encoder_context);
+i965_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *encoder_context);
 
 extern Bool
 gen9_avc_pak_context_init(VADriverContextP ctx, struct intel_encoder_context *encoder_context);

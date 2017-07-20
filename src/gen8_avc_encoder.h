@@ -1196,3 +1196,4 @@ typedef enum _gen8_avc_binding_table_offset_me {
     GEN8_AVC_ME_RESERVED10_CM_G8            = 26,
     GEN8_AVC_ME_NUM_SURFACES_CM_G8          = 27
 } gen8_avc_binding_table_offset_me;
+#endif /* GEN8_AVC_ENCODER_H */

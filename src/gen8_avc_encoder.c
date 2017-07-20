@@ -1345,6 +1345,57 @@ gen8_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
     return;
 }
 
+static void
+gen8_avc_kernel_init_brc(VADriverContextP ctx,
+                         struct generic_encoder_context *generic_context,
+                         struct gen_avc_brc_context *kernel_context)
+{
+    struct i965_driver_data *i965 = i965_driver_data(ctx);
+    struct i965_gpe_table *gpe = &i965->gpe_table;
+    struct i965_gpe_context *gpe_context = NULL;
+    struct encoder_kernel_parameter kernel_param ;
+    struct encoder_scoreboard_parameter scoreboard_param;
+    struct i965_kernel common_kernel;
+    int i = 0;
+
+    const int brc_curbe_size[NUM_GEN9_AVC_KERNEL_BRC - 1] = {
+        (sizeof(gen9_avc_brc_init_reset_curbe_data)),
+        (sizeof(gen8_avc_frame_brc_update_curbe_data)),
+        (sizeof(gen9_avc_brc_init_reset_curbe_data)),
+        (sizeof(gen8_avc_mbenc_curbe_data)),
+        0,
+    };
+
+    kernel_param.inline_data_size = 0;
+    kernel_param.sampler_size = 0;
+
+    memset(&scoreboard_param, 0, sizeof(scoreboard_param));
+    scoreboard_param.mask = 0xFF;
+    scoreboard_param.enable = generic_context->use_hw_scoreboard;
+    scoreboard_param.type = generic_context->use_hw_non_stalling_scoreboard;
+    scoreboard_param.walkpat_flag = 0;
+
+    for (i = 0; i < NUM_GEN9_AVC_KERNEL_BRC - 1; i++) {
+        kernel_param.curbe_size = brc_curbe_size[i];
+        gpe_context = &kernel_context->gpe_contexts[i];
+        gen9_init_gpe_context_avc(ctx, gpe_context, &kernel_param);
+        gen9_init_vfe_scoreboard_avc(gpe_context, &scoreboard_param);
+
+        memset(&common_kernel, 0, sizeof(common_kernel));
+
+        intel_avc_get_kernel_header_and_size((void *)(generic_context->enc_kernel_ptr),
+                                             generic_context->enc_kernel_size,
+                                             INTEL_GENERIC_ENC_BRC,
+                                             i,
+                                             &common_kernel);
+
+        gpe->load_kernels(ctx,
+                          gpe_context,
+                          &common_kernel,
+                          1);
+    }
+
+}
 
 static void
 gen8_avc_kernel_init(VADriverContextP ctx,
@@ -1356,7 +1407,7 @@ gen8_avc_kernel_init(VADriverContextP ctx,
     struct generic_encoder_context * generic_ctx = (struct generic_encoder_context *)vme_context->generic_enc_ctx;
 
     gen9_avc_kernel_init_scaling(ctx, generic_ctx, &avc_ctx->context_scaling);
-    gen9_avc_kernel_init_brc(ctx, generic_ctx, &avc_ctx->context_brc);
+    gen8_avc_kernel_init_brc(ctx, generic_ctx, &avc_ctx->context_brc);
     gen9_avc_kernel_init_me(ctx, generic_ctx, &avc_ctx->context_me);
     gen9_avc_kernel_init_mbenc(ctx, generic_ctx, &avc_ctx->context_mbenc);
     gen9_avc_kernel_init_wp(ctx, generic_ctx, &avc_ctx->context_wp);

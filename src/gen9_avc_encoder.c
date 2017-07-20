@@ -48,8 +48,11 @@
 #include "i965_encoder_common.h"
 #include "i965_avc_encoder_common.h"
 #include "gen9_avc_encoder_kernels.h"
+#include "gen8_avc_encoder_kernels.h"
 #include "gen9_avc_encoder.h"
+#include "gen8_avc_encoder.h"
 #include "gen9_avc_const_def.h"
+#include "gen8_avc_const_def.h"
 
 #define MAX_URB_SIZE                    4096 /* In register */
 #define NUM_KERNELS_PER_GPE_CONTEXT     1
@@ -7529,7 +7532,7 @@ gen9_avc_get_coded_status(VADriverContextP ctx,
 }
 
 Bool
-gen9_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *encoder_context)
+i965_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *encoder_context)
 {
     /* VME & PAK share the same context */
     struct i965_driver_data *i965 = i965_driver_data(ctx);
@@ -7562,16 +7565,19 @@ gen9_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *en
     vme_context->generic_enc_state = generic_state;
     vme_context->private_enc_state = avc_state;
 
-    if (IS_SKL(i965->intel.device_info) ||
-        IS_BXT(i965->intel.device_info)) {
+    if (IS_GEN8(i965->intel.device_info)) {
+        generic_ctx->enc_kernel_ptr = (void *)chv_avc_encoder_kernels;
+        generic_ctx->enc_kernel_size = sizeof(chv_avc_encoder_kernels);
+    } else if (IS_SKL(i965->intel.device_info) ||
+               IS_BXT(i965->intel.device_info)) {
         generic_ctx->enc_kernel_ptr = (void *)skl_avc_encoder_kernels;
         generic_ctx->enc_kernel_size = sizeof(skl_avc_encoder_kernels);
     } else if (IS_KBL(i965->intel.device_info) ||
                IS_GLK(i965->intel.device_info)) {
         generic_ctx->enc_kernel_ptr = (void *)kbl_avc_encoder_kernels;
         generic_ctx->enc_kernel_size = sizeof(kbl_avc_encoder_kernels);
-    } else
-        goto allocate_structure_failed;
+    }
+    goto allocate_structure_failed;
 
     /* initialize misc ? */
     avc_ctx->ctx = ctx;
@@ -7755,9 +7761,11 @@ gen9_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *en
 
     avc_state->lambda_table_enable = 0;
 
-
-    if (IS_SKL(i965->intel.device_info) ||
-        IS_BXT(i965->intel.device_info)) {
+    if (IS_GEN8(i965->intel.device_info)) {
+        avc_state->brc_const_data_surface_width = 64;
+        avc_state->brc_const_data_surface_height = 44;
+    } else if (IS_SKL(i965->intel.device_info) ||
+               IS_BXT(i965->intel.device_info)) {
         avc_state->brc_const_data_surface_width = 64;
         avc_state->brc_const_data_surface_height = 44;
         avc_state->brc_split_enable = 1;
@@ -7805,7 +7813,11 @@ gen9_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *en
     status_buffer->image_status_ctrl_reg_offset = MFC_IMAGE_STATUS_CTRL_REG;
     status_buffer->mfc_qp_status_count_reg_offset = MFC_QP_STATUS_COUNT_REG;
 
-    gen9_avc_kernel_init(ctx, encoder_context);
+    if (IS_GEN8(i965->intel.device_info)) {
+        gen8_avc_kernel_init(ctx, encoder_context);
+    } else {
+        gen9_avc_kernel_init(ctx, encoder_context);
+    }
     encoder_context->vme_context = vme_context;
     encoder_context->vme_pipeline = gen9_avc_vme_pipeline;
     encoder_context->vme_context_destroy = gen9_avc_vme_context_destroy;
