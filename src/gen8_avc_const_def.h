@@ -29,10 +29,10 @@
 #ifndef GEN8_AVC_const_DEF_H
 #define GEN8_AVC_const_DEF_H
 
-#include <stdio.h>
+/*#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdbool.h>*/
 
 #define GEN8_AVC_MBENC_CURBE_SIZE  88
 #define GEN8_AVC_ME_CURBE_SIZE  39
