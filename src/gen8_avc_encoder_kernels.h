@@ -22,7 +22,7 @@
  * SOFTWAR OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Pengfei Qu <Pengfei.qu@intel.com>
+ *    Tiantian Wang <tiantian.wang@intel.com>
  *
  */
 

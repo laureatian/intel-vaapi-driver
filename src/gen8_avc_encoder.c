@@ -47,13 +47,10 @@
 #include "i965_gpe_utils.h"
 #include "i965_encoder_common.h"
 #include "i965_avc_encoder_common.h"
-#include "gen8_avc_encoder_kernels.h"
-#include "gen9_avc_encoder.h"
 #include "gen8_avc_encoder.h"
-#include "gen9_avc_const_def.h"
 #include "gen8_avc_const_def.h"
 
-
+static void
 gen8_avc_set_curbe_mbenc(VADriverContextP ctx,
                          struct encode_state *encode_state,
                          struct i965_gpe_context *gpe_context,
