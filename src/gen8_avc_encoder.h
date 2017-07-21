@@ -375,7 +375,7 @@ typedef struct _gen8_avc_mbenc_curbe_data {
         uint32_t force_non_skip_check: 1;
         uint32_t disable_enc_skip_check: 1;
         uint32_t enable_direct_bias_adjustment: 1;
-        uint32_t enable_global_motion_bias_adjustmnent: 1;
+        uint32_t enable_global_motion_bias_adjustment: 1;
         uint32_t b_force_to_skip: 1;
         uint32_t reserved0: 6;
         uint32_t list1_ref_id0_field_parity: 1;
@@ -533,7 +533,7 @@ typedef struct _gen8_avc_mbenc_curbe_data {
     struct {
         uint32_t hme_mv_cost_scaling_factor: 8;
         int32_t reserved0: 8;
-        int32_t wide_intra_refresh_mby: 16;
+        int32_t widi_intra_refresh_mby: 16;
     } dw58;
 
     struct {
@@ -772,11 +772,11 @@ typedef struct _gen8_avc_scaling4x_curbe_data {
     } dw0;
 
     struct {
-        uint32_t   input_y_bti_frame;
+        uint32_t   input_y_bti;
     } dw1;
 
     struct {
-        uint32_t   output_y_bti_frame;
+        uint32_t   output_y_bti;
     } dw2;
 
     struct {

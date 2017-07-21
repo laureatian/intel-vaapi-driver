@@ -36,6 +36,7 @@
 #include <assert.h>
 #include "intel_driver.h"
 #include "gen9_avc_encoder.h"
+#include "gen8_avc_encoder.h"
 
 // SubMbPartMask defined in CURBE for AVC ENC
 #define INTEL_AVC_DISABLE_4X4_SUB_MB_PARTITION    0x40
