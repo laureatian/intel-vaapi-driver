@@ -9096,8 +9096,8 @@ i965_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *en
     vme_context->private_enc_state = avc_state;
 
     if (IS_GEN8(i965->intel.device_info)) {
-        generic_ctx->enc_kernel_ptr = (void *)chv_avc_encoder_kernels;
-        generic_ctx->enc_kernel_size = sizeof(chv_avc_encoder_kernels);
+        generic_ctx->enc_kernel_ptr = (void *)bdw_avc_encoder_kernels;
+        generic_ctx->enc_kernel_size = sizeof(bdw_avc_encoder_kernels);
     } else if (IS_SKL(i965->intel.device_info) ||
                IS_BXT(i965->intel.device_info)) {
         generic_ctx->enc_kernel_ptr = (void *)skl_avc_encoder_kernels;
