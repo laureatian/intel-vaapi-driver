@@ -7871,6 +7871,33 @@ gen9_mfc_avc_fqm_state(VADriverContextP ctx,
 }
 
 static void
+gen8_mfc_avc_insert_object(VADriverContextP ctx,
+                           struct intel_encoder_context *encoder_context,
+                           unsigned int *insert_data, int lenght_in_dws, int data_bits_in_last_dw,
+                           int skip_emul_byte_count, int is_last_header, int is_end_of_slice, int emulation_flag,
+                           int slice_header_indicator,
+                           struct intel_batchbuffer *batch)
+{
+    if (data_bits_in_last_dw == 0)
+        data_bits_in_last_dw = 32;
+
+    BEGIN_BCS_BATCH(batch, lenght_in_dws + 2);
+
+    OUT_BCS_BATCH(batch, MFX_INSERT_OBJECT | (lenght_in_dws));
+    OUT_BCS_BATCH(batch,
+                  (0 << 16) |   /* always start at offset 0 */
+                  (data_bits_in_last_dw << 8) |
+                  (skip_emul_byte_count << 4) |
+                  (!!emulation_flag << 3) |
+                  ((!!is_last_header) << 2) |
+                  ((!!is_end_of_slice) << 1) |
+                  (0 << 0));    /* check this flag */
+    intel_batchbuffer_data(batch, insert_data, lenght_in_dws * 4);
+
+    ADVANCE_BCS_BATCH(batch);
+}
+
+static void
 gen9_mfc_avc_insert_object(VADriverContextP ctx,
                            struct intel_encoder_context *encoder_context,
                            unsigned int *insert_data, int lenght_in_dws, int data_bits_in_last_dw,
@@ -9106,8 +9133,8 @@ i965_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *en
                IS_GLK(i965->intel.device_info)) {
         generic_ctx->enc_kernel_ptr = (void *)kbl_avc_encoder_kernels;
         generic_ctx->enc_kernel_size = sizeof(kbl_avc_encoder_kernels);
-    }
-    goto allocate_structure_failed;
+    } else
+        goto allocate_structure_failed;
 
     /* initialize misc ? */
     avc_ctx->ctx = ctx;
