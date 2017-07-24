@@ -41,4 +41,8 @@ extern const unsigned int bdw_avc_encoder_kernels[AVC_ENC_BDW_SZ];
 #define AVC_ENC_BSW_SZ  123004
 extern const unsigned int bsw_avc_encoder_kernels[AVC_ENC_BSW_SZ];
 
+//fei
+#define FEI_ENC_BSW_SZ  35860
+extern const unsigned int fei_avc_encoder_kernels[FEI_ENC_BSW_SZ];
+
 #endif//_GEN8_AVC_ENCODER_KERNELS_H
