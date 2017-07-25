@@ -5725,7 +5725,12 @@ gen8_avc_set_curbe_scaling4x(VADriverContextP ctx,
     curbe_cmd->dw2.output_y_bti = GEN8_SCALING_FRAME_DST_Y_CM;
 
 
-    curbe_cmd->dw5.flatness_threshold = 128;
+    curbe_cmd->dw5.flatness_threshold = 0;
+    if (surface_param->enable_mb_flatness_check) {
+        curbe_cmd->dw5.flatness_threshold = 128;
+        curbe_cmd->dw8.flatness_output_bti_top_field = 4;
+    }
+
     curbe_cmd->dw6.enable_mb_flatness_check = surface_param->enable_mb_flatness_check;
     curbe_cmd->dw6.enable_mb_variance_output = surface_param->enable_mb_variance_output;
     curbe_cmd->dw6.enable_mb_pixel_average_output = surface_param->enable_mb_pixel_average_output;

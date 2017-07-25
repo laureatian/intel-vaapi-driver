@@ -399,7 +399,7 @@ typedef struct _gen8_avc_mbenc_curbe_data {
         uint32_t hme_combined_extra_sus: 8;
         uint32_t num_ref_idx_l1_minus_one: 8;
         uint32_t enable_cabac_work_around: 1;
-        uint32_t reserved0: 4;
+        uint32_t reserved0: 3;
         uint32_t is_fwd_frame_short_term_ref: 1;
         uint32_t check_all_fractional_enable: 1;
         uint32_t hme_combine_overlap: 2;
