@@ -542,6 +542,19 @@ static const gen9_avc_frame_brc_update_curbe_data gen9_avc_frame_brc_update_curb
     },
 
 };
+static void
+print_out_curbe(void *cmd_ptr,
+                int cmd_size,
+                int media_state);
+
+static void
+print_out_log(void *ptr,
+              int size,
+              char *file_name,
+              int raw,
+              int width,
+              int height,
+              int pitch);
 
 static void
 gen9_avc_update_misc_parameters(VADriverContextP ctx,
@@ -1584,6 +1597,8 @@ gen9_avc_set_curbe_scaling2x(VADriverContextP ctx,
     curbe_cmd->dw9.output_y_bti = GEN9_AVC_SCALING_FRAME_DST_Y_INDEX;
 
     i965_gpe_context_unmap_curbe(gpe_context);
+    printf("2x scaling curbe.\n");
+    print_out_curbe(curbe_cmd, sizeof(*curbe_cmd), 0);
     return;
 }
 
@@ -2440,6 +2455,8 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
     cmd->dw22.sliding_window_size = generic_state->frames_per_window_size;
 
     i965_gpe_context_unmap_curbe(gpe_context);
+    printf("brc init reset curbe.\n");
+    print_out_curbe(cmd, sizeof(*cmd), 0);
 
     return;
 }
@@ -4839,7 +4856,9 @@ gen9_avc_set_curbe_sfd(VADriverContextP ctx,
     cmd->dw29.vdenc_output_image_state_index = GEN9_AVC_SFD_VDENC_OUTPUT_IMAGE_STATE_INDEX ;
 
     i965_gpe_context_unmap_curbe(gpe_context);
-
+    printf("sfd curbe.\n");
+    print_out_curbe(cmd, sizeof(*cmd), 0);
+    return;
 }
 
 static void
@@ -5333,6 +5352,8 @@ gen8_avc_set_curbe_mbenc(VADriverContextP ctx,
     cmd->dw86.static_detection_cost_table_index = GEN8_AVC_MBENC_STATIC_FRAME_DETECTION_OUTPUT_CM_G8;
 
     i965_gpe_context_unmap_curbe(gpe_context);
+    printf("mbenc curbe.\n");
+    print_out_curbe(cmd, sizeof(*cmd), 0);
 
     return;
 }
@@ -5716,6 +5737,8 @@ gen8_avc_set_curbe_scaling4x(VADriverContextP ctx,
     }
 
     i965_gpe_context_unmap_curbe(gpe_context);
+    printf("4x scaling curbe.\n");
+    print_out_curbe(curbe_cmd, sizeof(*curbe_cmd), 0);
     return;
 }
 
@@ -5873,6 +5896,8 @@ gen8_avc_set_curbe_me(VADriverContextP ctx,
     curbe_cmd->dw38.reserved = 0;
 
     i965_gpe_context_unmap_curbe(gpe_context);
+    printf("me curbe.\n");
+    print_out_curbe(curbe_cmd, sizeof(*curbe_cmd), 0);
     return;
 }
 
@@ -6213,6 +6238,8 @@ gen8_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
 
     //cmd->dw19.user_max_frame = i965_avc_get_profile_level_max_frame(&common_param, seq_param->level_idc);
     i965_gpe_context_unmap_curbe(gpe_context);
+    printf("brc frame update curbe.\n");
+    print_out_curbe(cmd, sizeof(*cmd), 0);
 
     return;
 }
@@ -9407,3 +9434,76 @@ gen9_avc_pak_context_init(VADriverContextP ctx, struct intel_encoder_context *en
     encoder_context->get_status = gen9_avc_get_coded_status;
     return true;
 }
+
+
+static void
+print_out_log(void *ptr,
+              int size,
+              char *file_name,
+              int raw,
+              int width,
+              int height,
+              int pitch)
+{
+    unsigned int *start = (unsigned int *)ptr;
+    int i = 0;
+    FILE *pfp = NULL;
+    int enable_2d = 0;
+
+    if (width && height && pitch) {
+        enable_2d = 1;
+
+        if (pitch * height > size) {
+            printf("%s : wrong 2d width& height value\n", __FUNCTION__);
+            return;
+        }
+    }
+
+    if (file_name) {
+        pfp = fopen(file_name, "w");
+
+        if (pfp) {
+            if (raw) {
+                if (enable_2d) {
+                    for (i = 0; i < height; i++) {
+                        fwrite(ptr, width, 1, pfp);
+                        ptr += pitch;
+                    }
+                } else
+                    fwrite(ptr, size, 1, pfp);
+            } else {
+                for (i = 0; i < (size / 4); i++) {
+                    fprintf(pfp, "%08x ", start[i]);
+                    if (i % 4 == 3)
+                        fprintf(pfp, " \n");
+                }
+            }
+
+            fflush(pfp);
+            fclose(pfp);
+        }
+    } else {
+        if (size > 10240)
+            size = 10240;
+
+        for (i = 0; i < (size / 4); i++) {
+            printf("%08x ", start[i]);
+            if (i % 4 == 3)
+                printf(" \n");
+        }
+
+        printf("\n\n");
+    }
+}
+
+static void
+print_out_curbe(void *cmd_ptr,
+                int cmd_size,
+                int media_state)
+{
+    printf("Curbe data for Media state %d\n", media_state);
+    print_out_log(cmd_ptr, cmd_size, NULL, 0, 0, 0, 0);
+}
+
+
+
