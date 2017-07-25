@@ -1793,7 +1793,7 @@ gen9_avc_kernel_scaling(VADriverContextP ctx,
     kernel_walker_param.no_dependency = 1;
 
     i965_init_media_object_walker_parameter(&kernel_walker_param, &media_object_walker_param);
-
+    printf("scaling kernel.\n");
     gen9_avc_run_kernel_media_object_walker(ctx, encoder_context,
                                             gpe_context,
                                             media_function,
@@ -2510,7 +2510,7 @@ gen9_avc_kernel_brc_init_reset(VADriverContextP ctx,
     memset(&media_object_inline_data, 0, sizeof(media_object_inline_data));
     media_object_param.pinline_data = &media_object_inline_data;
     media_object_param.inline_size = sizeof(media_object_inline_data);
-
+    printf("brc init reset kernel.\n");
     gen9_avc_run_kernel_media_object(ctx, encoder_context,
                                      gpe_context,
                                      media_function,
@@ -2854,7 +2854,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     memset(&media_object_inline_data, 0, sizeof(media_object_inline_data));
     media_object_param.pinline_data = &media_object_inline_data;
     media_object_param.inline_size = sizeof(media_object_inline_data);
-
+    printf("brc frame update kernel.\n");
     gen9_avc_run_kernel_media_object(ctx, encoder_context,
                                      gpe_context,
                                      media_function,
@@ -2991,7 +2991,7 @@ gen9_avc_kernel_brc_mb_update(VADriverContextP ctx,
     kernel_walker_param.no_dependency = 1;
 
     i965_init_media_object_walker_parameter(&kernel_walker_param, &media_object_walker_param);
-
+    printf("mb update kernel.\n");
     gen9_avc_run_kernel_media_object_walker(ctx, encoder_context,
                                             gpe_context,
                                             media_function,
@@ -4219,7 +4219,7 @@ gen9_avc_kernel_mbenc(VADriverContextP ctx,
     }
 
     i965_init_media_object_walker_parameter(&kernel_walker_param, &media_object_walker_param);
-
+    printf("mbenc kernel.\n");
     gen9_avc_run_kernel_media_object_walker(ctx, encoder_context,
                                             gpe_context,
                                             media_function,
@@ -4639,7 +4639,7 @@ gen9_avc_kernel_me(VADriverContextP ctx,
     kernel_walker_param.no_dependency = 1;
 
     i965_init_media_object_walker_parameter(&kernel_walker_param, &media_object_walker_param);
-
+    printf("me kernel.\n");
     gen9_avc_run_kernel_media_object_walker(ctx, encoder_context,
                                             gpe_context,
                                             media_function,
@@ -4771,7 +4771,7 @@ gen9_avc_kernel_wp(VADriverContextP ctx,
     kernel_walker_param.no_dependency = 1;
 
     i965_init_media_object_walker_parameter(&kernel_walker_param, &media_object_walker_param);
-
+    printf("wp kernel.\n");
     gen9_avc_run_kernel_media_object_walker(ctx, encoder_context,
                                             gpe_context,
                                             media_function,
@@ -4914,7 +4914,7 @@ gen9_avc_kernel_sfd(VADriverContextP ctx,
     memset(&media_object_inline_data, 0, sizeof(media_object_inline_data));
     media_object_param.pinline_data = &media_object_inline_data;
     media_object_param.inline_size = sizeof(media_object_inline_data);
-
+    printf("sfd kernel.\n");
     gen9_avc_run_kernel_media_object(ctx, encoder_context,
                                      gpe_context,
                                      media_function,
