@@ -5184,18 +5184,6 @@ gen8_avc_set_curbe_mbenc(VADriverContextP ctx,
 
     table_idx = slice_type_kernel[generic_state->frame_type];
     cmd->dw46.ref_cost = gen8_avc_ref_cost[table_idx][qp];
-    printf("cmd->dw46.ref_cost is %d\n", cmd->dw46.ref_cost);
-    printf("gen8_avc_ref_cost[table_idx][qp] %d\n", gen8_avc_ref_cost[table_idx][qp]);
-    printf("table Idx %d\n", table_idx);
-    printf("qp %d\n", qp);
-    int ii = 0;
-    int jj = 0;
-    for (ii = 0; ii < 3; ii++) {
-        for (jj = 0; jj < 64; jj++) {
-            printf("  %d", gen8_avc_ref_cost[ii][jj]);
-        }
-        printf("\n");
-    }
     if (generic_state->frame_type == SLICE_TYPE_I) {
         cmd->dw0.skip_mode_enable = 0;
         cmd->dw37.skip_mode_enable = 0;
@@ -5266,7 +5254,8 @@ gen8_avc_set_curbe_mbenc(VADriverContextP ctx,
             cmd->dw58.hme_mv_cost_scaling_factor = avc_state->hme_mv_cost_scaling_factor;
 
     }
-
+    printf("cmd->dw34.enable_mb_flatness_check_optimization %d\n", cmd->dw34.enable_mb_flatness_check_optimization);
+    printf("cmd->dw36.check_all_fractional_enable %d \n", cmd->dw36.check_all_fractional_enable);
     avc_state->block_based_skip_enable = cmd->dw3.block_based_skip_enable;
 
     if (avc_state->rolling_intra_refresh_enable) {
