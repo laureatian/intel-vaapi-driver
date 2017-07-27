@@ -36,9 +36,10 @@
 
 #define GEN8_AVC_MBENC_CURBE_SIZE  88
 #define GEN8_AVC_ME_CURBE_SIZE  39
-const unsigned int gen8_avc_mbenc_curbe_i_frame_dist_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
-const unsigned int gen8_avc_mbenc_curbe_normal_i_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
-const unsigned int gen8_avc_mbenc_curbe_normal_p_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
-const unsigned int gen8_avc_mbenc_curbe_normal_b_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
-const unsigned int gen8_avc_me_curbe_init_data[GEN8_AVC_ME_CURBE_SIZE];
+extern const unsigned int gen8_avc_mbenc_curbe_i_frame_dist_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+extern const unsigned int gen8_avc_mbenc_curbe_normal_i_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+extern const unsigned int gen8_avc_mbenc_curbe_normal_p_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+extern const unsigned int gen8_avc_mbenc_curbe_normal_b_frame_init_data[GEN8_AVC_MBENC_CURBE_SIZE];
+extern const unsigned int gen8_avc_me_curbe_init_data[GEN8_AVC_ME_CURBE_SIZE];
+extern const unsigned short gen8_avc_ref_cost[3][64];
 #endif //GEN8_AVC_const_DEF_H

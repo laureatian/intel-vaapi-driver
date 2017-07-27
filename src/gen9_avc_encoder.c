@@ -5183,8 +5183,19 @@ gen8_avc_set_curbe_mbenc(VADriverContextP ctx,
     }
 
     table_idx = slice_type_kernel[generic_state->frame_type];
-    cmd->dw46.ref_cost = gen9_avc_ref_cost[table_idx][qp];
-
+    cmd->dw46.ref_cost = gen8_avc_ref_cost[table_idx][qp];
+    printf("cmd->dw46.ref_cost is %d\n", cmd->dw46.ref_cost);
+    printf("gen8_avc_ref_cost[table_idx][qp] %d\n", gen8_avc_ref_cost[table_idx][qp]);
+    printf("table Idx %d\n", table_idx);
+    printf("qp %d\n", qp);
+    int ii = 0;
+    int jj = 0;
+    for (ii = 0; ii < 3; ii++) {
+        for (jj = 0; jj < 64; jj++) {
+            printf("  %d", gen8_avc_ref_cost[ii][jj]);
+        }
+        printf("\n");
+    }
     if (generic_state->frame_type == SLICE_TYPE_I) {
         cmd->dw0.skip_mode_enable = 0;
         cmd->dw37.skip_mode_enable = 0;
