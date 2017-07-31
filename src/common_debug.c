@@ -24,7 +24,7 @@ static char * path = "/home/tiantian/doc/vaapi_log/";
 
 void debug_map_surface(dri_bo *bo, char* file_name, int debug_log_enable)
 {
-
+    int i;
     if (!debug_log_enable) return;
     unsigned int tiling, swizzle;
     if (bo != NULL) {
@@ -37,8 +37,19 @@ void debug_map_surface(dri_bo *bo, char* file_name, int debug_log_enable)
         else
             dri_bo_map(bo, 1);
 
-        FILE* fp_image = fopen(file_name, "wb+");
-        fwrite(bo->virtual, 1, bo_size, fp_image);
+        //  FILE* fp_image = fopen(file_name, "wb+");
+        unsigned int *start = (unsigned int*)bo->virtual;
+        FILE* fp_image = fopen(file_name, "w");
+//        fwrite(bo->virtual, 1, bo_size, fp_image);
+        if (bo_size % 4 != 0) {
+            printf("This buffer is not 4 aligned %s\n", file_name);
+        }
+        for (i = 0; i < bo_size / 4; i++) {
+            fprintf(fp_image, "%08x ", start[i]);
+            if (i % 4 == 3)
+                fprintf(fp_image, " \n");
+        }
+
         fclose(fp_image);
         dri_bo_unmap(bo);
     }
