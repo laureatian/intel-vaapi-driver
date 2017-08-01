@@ -2897,7 +2897,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     media_object_param.pinline_data = &media_object_inline_data;
     media_object_param.inline_size = sizeof(media_object_inline_data);
     printf("brc frame update kernel.\n");
-    debug_dump_gpe(ctx, &avc_ctx->res_mbenc_brc_buffer, "frame_update_brc", "mbenc_read", g_debug_enable, generic_state->total_frame_number);
+    //debug_dump_gpe(ctx, &avc_ctx->res_mbenc_brc_buffer, "frame_update_brc", "mbenc_read", g_debug_enable, generic_state->total_frame_number);
     gen9_avc_run_kernel_media_object(ctx, encoder_context,
                                      gpe_context,
                                      media_function,
@@ -2905,7 +2905,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     debug_dump_curbe(ctx, gpe_context, "frame_update", "brc", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_frame_brc_update_curbe_data));
 //    debug_dump_curbe(ctx,curbe_brc_param.gpe_context_mbenc,"frame_update_brc","mbenc_write",g_debug_enable,generic_state->total_frame_number,sizeof(gen9_avc_mbenc_curbe_data));
     //debug_dump_gpe(ctx,&avc_ctx->res_mbenc_brc_buffer,"frame_update_brc","mbenc_brc_write",g_debug_enable,generic_state->total_frame_number);
-    debug_dump_gpe(ctx, &avc_ctx->res_mbenc_brc_buffer, "frame_update_brc", "mbenc_write", g_debug_enable, generic_state->total_frame_number);
+    //debug_dump_gpe(ctx, &avc_ctx->res_mbenc_brc_buffer, "frame_update_brc", "mbenc_write", g_debug_enable, generic_state->total_frame_number);
     debug_dump_gpe(ctx, &avc_ctx->res_brc_history_buffer, "frame_update_brc", "history_buf", g_debug_enable, generic_state->total_frame_number);
     debug_dump_gpe(ctx, &avc_ctx->res_brc_image_state_read_buffer, "frame_update_brc", "image_read_buf", g_debug_enable, generic_state->total_frame_number);
     debug_dump_gpe(ctx, &avc_ctx->res_brc_image_state_write_buffer, "frame_update_brc", "image_write_buf", g_debug_enable, generic_state->total_frame_number);
@@ -7365,6 +7365,10 @@ gen9_avc_vme_gpe_kernel_run(VADriverContextP ctx,
     /*call SFD kernel after HME in same command buffer*/
     sfd_in_use = avc_state->sfd_enable && generic_state->hme_enabled;
     sfd_in_use = sfd_in_use && !avc_state->sfd_mb_enable;
+    printf("avc_state->sfd_enable %d\n", avc_state->sfd_enable);
+    printf("generic_state->hme_enabled%d\n", generic_state->hme_enabled);
+    printf("avc_state->sfd_mb_enable%d\n", avc_state->sfd_mb_enable);
+    printf("sfd_in_usr %d\n", sfd_in_use);
     if (sfd_in_use) {
         gen9_avc_kernel_sfd(ctx, encode_state, encoder_context);
     }
