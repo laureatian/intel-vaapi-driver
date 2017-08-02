@@ -1817,10 +1817,26 @@ gen9_avc_kernel_scaling(VADriverContextP ctx,
                                             gpe_context,
                                             media_function,
                                             &media_object_walker_param);
+
+    /* if(surface_param.use_4x_scaling && avc_state->mb_status_supported){
+
+     if (surface_param.mbv_proc_stat_enabled) {
+      debug_dumpobjsurface(ctx, &avc_ctx->res_mb_status_buffer, "scalex", "mbv_proc_stat_buffer", g_debug_enable, generic_state->total_frame_number);
+     }
+    if(surface_param.enable_mb_flatness_check){
+    debug_dumpobjsurface(ctx, &avc_ctx->res_flatness_check_surface, "scalex", "pres_flatness_surface_check", g_debug_enable, generic_state->total_frame_number);
+    }
+    }*/
     switch (hme_type) {
     case INTEL_ENC_HME_4x : {
         debug_dump_curbe(ctx, gpe_context, "scale4x", "dump", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_scaling4x_curbe_data));
         debug_dumpobjsurface(ctx, surface_param.output_surface, "scale4x", "buffer", g_debug_enable, generic_state->total_frame_number);
+        /*if (surface_param.mbv_proc_stat_enabled) {
+         debug_dumpobjsurface(ctx, surface_param.pres_mbv_proc_stat_buffer, "scalex", "mbv_proc_stat_buffer", g_debug_enable, generic_state->total_frame_number);
+        }
+        if(surface_param.enable_mb_flatness_check){
+        debug_dumpobjsurface(ctx, surface_param.pres_flatness_check_surface, "scalex", "pres_flatness_surface_check", g_debug_enable, generic_state->total_frame_number);
+        }*/
         break;
     }
     case INTEL_ENC_HME_16x : {
@@ -4284,6 +4300,22 @@ gen9_avc_kernel_mbenc(VADriverContextP ctx,
         debug_dump_avc_mbcode_mv(ctx, encode_state->reconstructed_object, "mbenc", "mb_code", g_debug_enable, generic_state->total_frame_number);
         debug_dump_curbe(ctx, gpe_context, "mbenc", "dump", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_mbenc_curbe_data));
         //debug_dump_gpe(ctx,&avc_ctx->res_mbenc_brc_buffer,"mbenc","brc_mbenc_curbe_non_i_frame",g_debug_enable,generic_state->total_frame_number);
+
+        debug_dump_gpe(ctx, &avc_ctx->s4x_memv_data_buffer, "mbenc-me4x", "mv", g_debug_enable, generic_state->total_frame_number);
+        debug_dump_gpe(ctx, &avc_ctx->s4x_memv_distortion_buffer, "mbenc-me4x", "mv_distortion", g_debug_enable, generic_state->total_frame_number);
+        if (param.mb_const_data_buffer_in_use) {
+            debug_dump_gpe(ctx, &avc_ctx->res_mbbrc_const_data_buffer, "mbenc-resmbbrc", "const", g_debug_enable, generic_state->total_frame_number);
+        }
+        if (param.mb_qp_buffer_in_use && avc_state->mb_qp_data_enable) {
+            debug_dump_gpe(ctx, &avc_ctx->res_mb_qp_data_surface, "mbenc-resmb", "qp_data", g_debug_enable, generic_state->total_frame_number);
+        }
+        if (param.mb_qp_buffer_in_use && !avc_state->mb_qp_data_enable) {
+            debug_dump_gpe(ctx, &avc_ctx->res_mbbrc_mb_qp_data_surface, "mbenc-resmbbrc", "qp_data", g_debug_enable, generic_state->total_frame_number);
+        }
+        if (avc_state->flatness_check_enable) {
+            debug_dump_gpe(ctx, &avc_ctx->res_flatness_check_surface, "mbenc_res_flatness", "check_surface", g_debug_enable, generic_state->total_frame_number);
+        }
+        debug_dump_gpe(ctx, &avc_ctx->res_sfd_output_buffer, "mbenc_sfd", "output_buffer", g_debug_enable, generic_state->total_frame_number);
     }
     return VA_STATUS_SUCCESS;
 }
@@ -4431,7 +4463,7 @@ gen9_avc_send_surface_me(VADriverContextP ctx,
         return;
     avc_priv_surface = obj_surface->private_data;
 
-
+    printf("curbe_param->hme_type %d\n", curbe_param->hme_type);
     switch (curbe_param->hme_type) {
     case INTEL_ENC_HME_4x : {
         /*memv output 4x*/
@@ -4443,6 +4475,7 @@ gen9_avc_send_surface_me(VADriverContextP ctx,
                                        GEN9_AVC_ME_MV_DATA_SURFACE_INDEX);
 
         /*memv input 16x*/
+        printf("generic_state->b16xme_enabled %d\n", generic_state->b16xme_enabled);
         if (generic_state->b16xme_enabled) {
             gpe_resource = &avc_ctx->s16x_memv_data_buffer;
             gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
@@ -4711,11 +4744,18 @@ gen9_avc_kernel_me(VADriverContextP ctx,
         debug_dump_gpe(ctx, &avc_ctx->s4x_memv_data_buffer, "me4x", "mv", g_debug_enable, generic_state->total_frame_number);
         debug_dump_gpe(ctx, &avc_ctx->s4x_memv_distortion_buffer, "me4x", "dist", g_debug_enable, generic_state->total_frame_number);
         debug_dump_gpe(ctx, &avc_ctx->res_brc_dist_data_surface, "me4x", "brc_dist", g_debug_enable, generic_state->total_frame_number);
+        if (generic_state->b16xme_enabled) {
+            debug_dump_gpe(ctx, &avc_ctx->s16x_memv_data_buffer, "4x-me16x", "mv", g_debug_enable, generic_state->total_frame_number);
+        }
         break;
     }
     case INTEL_ENC_HME_16x : {
         debug_dump_curbe(ctx, gpe_context, "me16x", "dump", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_me_curbe_data));
         debug_dump_gpe(ctx, &avc_ctx->s16x_memv_data_buffer, "me16x", "mv", g_debug_enable, generic_state->total_frame_number);
+
+        if (generic_state->b32xme_enabled) {
+            debug_dump_gpe(ctx, &avc_ctx->s16x_memv_data_buffer, "16x-me32x", "mv", g_debug_enable, generic_state->total_frame_number);
+        }
         break;
     }
     case INTEL_ENC_HME_32x : {
@@ -5510,6 +5550,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                             I965_SURFACEFORMAT_R16_UINT,
                             GEN9_AVC_MBENC_CURR_UV_INDEX);
 
+    printf("generic_state->hme_enabled %d\n", generic_state->hme_enabled);
     if (generic_state->hme_enabled) {
         /*memv input 4x*/
         gpe_resource = &(avc_ctx->s4x_memv_data_buffer);
@@ -5528,6 +5569,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     }
 
     /*mbbrc const data_buffer*/
+    printf("param->mb_const_data_buffer_in_use %d\n", param->mb_const_data_buffer_in_use);
     if (param->mb_const_data_buffer_in_use) {
         size = 16 * AVC_QP_MAX * sizeof(unsigned int);
         gpe_resource = &avc_ctx->res_mbbrc_const_data_buffer;
@@ -5542,6 +5584,8 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     }
 
     /*mb qp data_buffer*/
+    printf("param->mb_qp_buffer_in_use %d\n", param->mb_qp_buffer_in_use);
+    printf("avc_state->mb_qp_data_enable %d \n", avc_state->mb_qp_data_enable);
     if (param->mb_qp_buffer_in_use) {
         if (avc_state->mb_qp_data_enable)
             gpe_resource = &(avc_ctx->res_mb_qp_data_surface);
@@ -5568,6 +5612,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                              obj_surface,
                              GEN9_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_0_INDEX);
     /*input ref YUV surface*/
+    printf("slice_param->num_ref_idx_l0_active_minus1 %d\n", slice_param->num_ref_idx_l0_active_minus1);
     for (i = 0; i < slice_param->num_ref_idx_l0_active_minus1 + 1; i++) {
         surface_id = slice_param->RefPicList0[i].picture_id;
         obj_surface = SURFACE(surface_id);
@@ -5592,6 +5637,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                              obj_surface,
                              GEN9_AVC_MBENC_VME_INTER_PRED_CURR_PIC_IDX_1_INDEX);
 
+    printf("slice_param->num_ref_idx_l1_active_minus1 %d \n", slice_param->num_ref_idx_l1_active_minus1);
     for (i = 0; i < slice_param->num_ref_idx_l1_active_minus1 + 1; i++) {
         if (i > 0) break; // only  one ref supported here for B frame
         surface_id = slice_param->RefPicList1[i].picture_id;
@@ -5653,6 +5699,8 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     obj_surface = encode_state->reconstructed_object;
     avc_priv_surface = obj_surface->private_data;
     if (avc_state->ref_pic_select_list_supported && avc_priv_surface->is_as_ref) {
+        printf("avc_state->ref_pic_select_list_supported %d\n", avc_state->ref_pic_select_list_supported);
+        printf("avc_priv_surface->is_as_ref %d\n", avc_priv_surface->is_as_ref);
         gpe_resource = &(avc_priv_surface->res_ref_pic_select_surface);
         gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
                                        gpe_resource,
@@ -5674,7 +5722,10 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                    0,
                                    GEN9_AVC_MBENC_MB_STATS_INDEX);
 
-    } else*/ if (avc_state->flatness_check_enable) {
+    } else*/
+
+    printf("avc_state->flatness_check_enable %d \n", avc_state->flatness_check_enable);
+    if (avc_state->flatness_check_enable) {
 
         gpe_resource = &(avc_ctx->res_flatness_check_surface);
         gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
@@ -5684,6 +5735,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                        GEN9_AVC_MBENC_MB_STATS_INDEX);
     }
 
+    printf("param->mad_enable %d\n", param->mad_enable);
     if (param->mad_enable) {
         /*mad buffer input*/
         size = 4;
@@ -5711,6 +5763,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                      GEN95_AVC_MBENC_BRC_CURBE_DATA_INDEX);
      }*/
 
+    printf("avc_state->arbitrary_num_mbs_in_slice %d\n", avc_state->arbitrary_num_mbs_in_slice);
     /*artitratry num mbs in slice*/
     if (avc_state->arbitrary_num_mbs_in_slice) {
         /*slice surface input*/
@@ -5724,6 +5777,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     }
 
     /* BRC distortion data buffer for I frame */
+    printf("avc_state->mb_disable_skip_map_enable %d\n", avc_state->mb_disable_skip_map_enable);
     if (!mbenc_i_frame_dist_in_use) {
         if (avc_state->mb_disable_skip_map_enable) {
             gpe_resource = &(avc_ctx->res_mb_disable_skip_map_surface);
@@ -5752,6 +5806,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
           }*/
     }
 
+    printf("avc_state->sfd_enable %d\n", avc_state->sfd_enable);
     if (avc_state->sfd_enable) {
         size = 128 / sizeof(unsigned long);
         gpe_resource = &(avc_ctx->res_sfd_output_buffer);
@@ -5842,6 +5897,8 @@ gen8_avc_send_surface_scaling(VADriverContextP ctx,
                             GEN9_AVC_SCALING_FRAME_DST_Y_INDEX);
 
     /*add buffer mv_proc_stat, here need change*/
+    printf("surface_param->mbv_proc_stat_enabled %d\n", surface_param->mbv_proc_stat_enabled);
+    printf("surface_param->enable_mb_flatness_check %d \n", surface_param->enable_mb_flatness_check);
     if (surface_param->mbv_proc_stat_enabled) {
         res_size = 16 * (surface_param->input_frame_width / 16) * (surface_param->input_frame_height / 16) * sizeof(unsigned int);
 
@@ -6001,7 +6058,7 @@ gen8_avc_send_surface_me(VADriverContextP ctx,
         return;
     avc_priv_surface = obj_surface->private_data;
 
-
+    printf("curbe_param->hme_type %d\n", curbe_param->hme_type);
     switch (curbe_param->hme_type) {
     case INTEL_ENC_HME_4x : {
         /*memv output 4x*/
@@ -6013,6 +6070,7 @@ gen8_avc_send_surface_me(VADriverContextP ctx,
                                        GEN9_AVC_ME_MV_DATA_SURFACE_INDEX);
 
         /*memv input 16x*/
+        printf("generic_state->b16xme_enabled %d\n", generic_state->b16xme_enabled);
         if (generic_state->b16xme_enabled) {
             gpe_resource = &avc_ctx->s16x_memv_data_buffer;
             gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
