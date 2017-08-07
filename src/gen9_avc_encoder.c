@@ -4315,7 +4315,7 @@ gen9_avc_kernel_mbenc(VADriverContextP ctx,
         if (avc_state->flatness_check_enable) {
             debug_dump_gpe(ctx, &avc_ctx->res_flatness_check_surface, "mbenc_res_flatness", "check_surface", g_debug_enable, generic_state->total_frame_number);
         }
-        debug_dump_gpe(ctx, &avc_ctx->res_sfd_output_buffer, "mbenc_sfd", "output_buffer", g_debug_enable, generic_state->total_frame_number);
+        //debug_dump_gpe(ctx, &avc_ctx->res_sfd_output_buffer, "mbenc_sfd", "output_buffer", g_debug_enable, generic_state->total_frame_number);
     }
     return VA_STATUS_SUCCESS;
 }
@@ -5264,7 +5264,7 @@ gen8_avc_set_curbe_mbenc(VADriverContextP ctx,
     /* Default:2 used for MBBRC (MB QP Surface width and height are 4x downscaled picture in MB unit * 4  bytes)
        0 used for MBQP data surface (MB QP Surface width and height are same as the input picture size in MB unit * 1bytes)
        starting GEN9, BRC use split kernel, MB QP surface is same size as input picture */
-    cmd->dw47.mb_qp_read_factor = (avc_state->mb_qp_data_enable || generic_state->mb_brc_enabled) ? 0 : 2;
+    cmd->dw47.mb_qp_read_factor = (avc_state->mb_qp_data_enable) ? 0 : 2;
 
     if (mbenc_i_frame_dist_in_use) {
         cmd->dw13.qp_prime_y = 0;
@@ -7021,8 +7021,9 @@ gen9_avc_encode_check_parameter(VADriverContextP ctx,
          rate_control_mode == VA_RC_CQP)) {
         generic_state->brc_need_reset = 0;// not support by CQP
     }
-
-    if (generic_state->brc_need_reset && !avc_state->sfd_mb_enable) {
+    printf("generic_state->brc_need_reset %d\n", generic_state->brc_need_reset);
+    // if (generic_state->brc_need_reset && !avc_state->sfd_mb_enable) {
+    if (generic_state->internal_rate_mode == VA_RC_CBR || generic_state->internal_rate_mode == VA_RC_VBR) {
         avc_state->sfd_enable = 0;
     }
 
@@ -7052,6 +7053,7 @@ gen9_avc_encode_check_parameter(VADriverContextP ctx,
     if (avc_state->caf_supported) {
         switch (generic_state->frame_type) {
         case SLICE_TYPE_I:
+            avc_state->caf_enable = 0;
             break;
         case SLICE_TYPE_P:
             avc_state->caf_enable = gen9_avc_all_fractional[preset] & 0x01;
@@ -9130,7 +9132,7 @@ gen9_avc_encode_picture(VADriverContextP ctx,
     else
         intel_batchbuffer_start_atomic_bcs(batch, 0x1000);
     intel_batchbuffer_emit_mi_flush(batch);
-
+    printf("pak generic_state->num_pak_passes %d\n", generic_state->num_pak_passes);
     for (generic_state->curr_pak_pass = 0;
          generic_state->curr_pak_pass < generic_state->num_pak_passes;
          generic_state->curr_pak_pass++) {
