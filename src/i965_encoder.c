@@ -1367,7 +1367,7 @@ intel_encoder_end_picture(VADriverContextP ctx,
 
     encoder_context->mfc_pipeline(ctx, profile, encode_state, encoder_context);
     encoder_context->num_frames_in_sequence++;
-    printf("num frames in sequence is %d:\n", encoder_context->num_frames_in_sequence);
+    printf("num frames in sequence is %d \n", encoder_context->num_frames_in_sequence);
     encoder_context->brc.need_reset = 0;
     /*
      * ROI is only available for the current frame, see the comment

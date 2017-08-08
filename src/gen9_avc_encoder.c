@@ -5525,6 +5525,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                 GEN9_AVC_MBENC_IND_MV_DATA_INDEX);
 
     /*input current  YUV surface, current input Y/UV object*/
+    printf("mbenc_i_frame_dist_in_use %d \n", mbenc_i_frame_dist_in_use);
     if (mbenc_i_frame_dist_in_use) {
         obj_surface = encode_state->reconstructed_object;
         if (!obj_surface || !obj_surface->private_data)
@@ -5551,7 +5552,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                             GEN9_AVC_MBENC_CURR_UV_INDEX);
 
     printf("generic_state->hme_enabled %d\n", generic_state->hme_enabled);
-    if (generic_state->hme_enabled) {
+    if (generic_state->hme_enabled && generic_state->frame_type != SLICE_TYPE_I) {
         /*memv input 4x*/
         gpe_resource = &(avc_ctx->s4x_memv_data_buffer);
         gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
@@ -5698,9 +5699,9 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     /* as ref frame ,update later RefPicSelect of Current Picture*/
     obj_surface = encode_state->reconstructed_object;
     avc_priv_surface = obj_surface->private_data;
+    printf("avc_state->ref_pic_select_list_supported %d\n", avc_state->ref_pic_select_list_supported);
+    printf("avc_priv_surface->is_as_ref %d\n", avc_priv_surface->is_as_ref);
     if (avc_state->ref_pic_select_list_supported && avc_priv_surface->is_as_ref) {
-        printf("avc_state->ref_pic_select_list_supported %d\n", avc_state->ref_pic_select_list_supported);
-        printf("avc_priv_surface->is_as_ref %d\n", avc_priv_surface->is_as_ref);
         gpe_resource = &(avc_priv_surface->res_ref_pic_select_surface);
         gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
                                        gpe_resource,
@@ -5751,17 +5752,17 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     }
 
     /*brc updated mbenc curbe data buffer,it is ignored by gen9 and used in gen95*/
-    /* if (avc_state->mbenc_brc_buffer_size > 0) {
-         size = avc_state->mbenc_brc_buffer_size;
-         gpe_resource = &(avc_ctx->res_mbenc_brc_buffer);
-         gen9_add_buffer_gpe_surface(ctx,
-                                     gpe_context,
-                                     gpe_resource,
-                                     0,
-                                     size / 4,
-                                     0,
-                                     GEN95_AVC_MBENC_BRC_CURBE_DATA_INDEX);
-     }*/
+    if (avc_state->mbenc_brc_buffer_size > 0) {
+        size = avc_state->mbenc_brc_buffer_size;
+        gpe_resource = &(avc_ctx->res_mbenc_brc_buffer);
+        gen9_add_buffer_gpe_surface(ctx,
+                                    gpe_context,
+                                    gpe_resource,
+                                    0,
+                                    size / 4,
+                                    0,
+                                    GEN95_AVC_MBENC_BRC_CURBE_DATA_INDEX);
+    }
 
     printf("avc_state->arbitrary_num_mbs_in_slice %d\n", avc_state->arbitrary_num_mbs_in_slice);
     /*artitratry num mbs in slice*/
@@ -5777,7 +5778,10 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
     }
 
     /* BRC distortion data buffer for I frame */
+
+    printf("!mbenc_i_frame_dist_in_use %d \n", !mbenc_i_frame_dist_in_use);
     printf("avc_state->mb_disable_skip_map_enable %d\n", avc_state->mb_disable_skip_map_enable);
+    printf("avc_state->sfd_enable %d \n", avc_state->sfd_enable);
     if (!mbenc_i_frame_dist_in_use) {
         if (avc_state->mb_disable_skip_map_enable) {
             gpe_resource = &(avc_ctx->res_mb_disable_skip_map_surface);
@@ -5804,21 +5808,20 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                                  (is_g95 ? GEN95_AVC_MBENC_SFD_COST_TABLE_INDEX : GEN9_AVC_MBENC_SFD_COST_TABLE_INDEX));
               }
           }*/
-    }
 
-    printf("avc_state->sfd_enable %d\n", avc_state->sfd_enable);
-    if (avc_state->sfd_enable) {
-        size = 128 / sizeof(unsigned long);
-        gpe_resource = &(avc_ctx->res_sfd_output_buffer);
-        gen9_add_buffer_gpe_surface(ctx,
-                                    gpe_context,
-                                    gpe_resource,
-                                    0,
-                                    size / 4,
-                                    0,
-                                    GEN8_AVC_MBENC_STATIC_FRAME_DETECTION_OUTPUT_CM_G8);
-    }
 
+        if (avc_state->sfd_enable) {
+            size = 128 / sizeof(unsigned long);
+            gpe_resource = &(avc_ctx->res_sfd_output_buffer);
+            gen9_add_buffer_gpe_surface(ctx,
+                                        gpe_context,
+                                        gpe_resource,
+                                        0,
+                                        size / 4,
+                                        0,
+                                        GEN8_AVC_MBENC_STATIC_FRAME_DETECTION_OUTPUT_CM_G8);
+        }
+    }
     return;
 }
 
@@ -7023,8 +7026,10 @@ gen9_avc_encode_check_parameter(VADriverContextP ctx,
     }
     printf("generic_state->brc_need_reset %d\n", generic_state->brc_need_reset);
     // if (generic_state->brc_need_reset && !avc_state->sfd_mb_enable) {
-    if (generic_state->internal_rate_mode == VA_RC_CBR || generic_state->internal_rate_mode == VA_RC_VBR) {
+    if (generic_state->internal_rate_mode == VA_RC_CBR || generic_state->internal_rate_mode == VA_RC_VBR || generic_state->frame_type == SLICE_TYPE_I) {
         avc_state->sfd_enable = 0;
+    } else {
+        avc_state->sfd_enable = 1;
     }
 
     if (generic_state->frames_per_window_size == 0) {
