@@ -47,7 +47,7 @@ void debug_map_surface(dri_bo *bo, char* file_name, int debug_log_enable)
         for (i = 0; i < bo_size / 4; i++) {
             fprintf(fp_image, "%08x ", start[i]);
             if (i % 4 == 3)
-                fprintf(fp_image, " \n");
+                fprintf(fp_image, "\n");
         }
 
         fclose(fp_image);
@@ -62,6 +62,7 @@ void debug_map_yuv_surface(dri_bo *bo, char* file_name, int debug_log_enable, in
     unsigned int tiling, swizzle;
     unsigned char * pdata = NULL;
     int i = 0;
+    int j = 0;
     if (bo != NULL) {
         dri_bo_get_tiling(bo, &tiling, &swizzle);
 
@@ -74,12 +75,28 @@ void debug_map_yuv_surface(dri_bo *bo, char* file_name, int debug_log_enable, in
         pdata = bo->virtual;
         for (i = 0; i < height; i++) {
             fwrite(pdata, 1, width, fp_image);
+            /* if(stride_w % 4 !=0){
+               printf("height is not 4 aligned.\n");
+               }
+             for(j = 0; j < stride_w /4; j ++){
+              fprintf(fp_image, "%08x ",pdata[j]);
+              if(j % 4 == 3)
+                fprintf(fp_image, "\n");
+             }*/
             pdata += stride_w;
 
         }
-        pdata = bo->virtual + stride_w * stride_h;
+        pdata = (unsigned int*)(bo->virtual + stride_w * stride_h);
         for (i = 0; i < height / 2; i++) {
             fwrite(pdata, 1, width, fp_image);
+            /* if(stride_w % 4 !=0){
+               printf("height is not 4 aligned.\n");
+               }
+             for(j = 0; j < stride_w /4; j ++){
+              fprintf(fp_image, "%08x ",pdata[j]);
+              if(j % 4 == 3)
+                fprintf(fp_image, "\n");
+             }*/
             pdata += stride_w;
 
         }

@@ -946,17 +946,17 @@ gen9_avc_allocate_resources(VADriverContextP ctx,
         goto failed_allocation;
 
     /* scaling related surface   */
-    if (avc_state->mb_status_supported) {
-        i965_free_gpe_resource(&avc_ctx->res_mb_status_buffer);
-        size = (generic_state->frame_width_in_mbs * generic_state->frame_height_in_mbs * 16 * 4 + 1023) & ~0x3ff;
-        allocate_flag = i965_allocate_gpe_resource(i965->intel.bufmgr,
-                                                   &avc_ctx->res_mb_status_buffer,
-                                                   ALIGN(size, 0x1000),
-                                                   "MB statistics output buffer");
-        if (!allocate_flag)
-            goto failed_allocation;
-        i965_zero_gpe_resource(&avc_ctx->res_mb_status_buffer);
-    }
+    // if (avc_state->mb_status_supported) {
+    i965_free_gpe_resource(&avc_ctx->res_mb_status_buffer);
+    size = (generic_state->frame_width_in_mbs * generic_state->frame_height_in_mbs * 16 * 4 + 1023) & ~0x3ff;
+    allocate_flag = i965_allocate_gpe_resource(i965->intel.bufmgr,
+                                               &avc_ctx->res_mb_status_buffer,
+                                               ALIGN(size, 0x1000),
+                                               "MB statistics output buffer");
+    if (!allocate_flag)
+        goto failed_allocation;
+    i965_zero_gpe_resource(&avc_ctx->res_mb_status_buffer);
+    //}
 
     if (avc_state->flatness_check_supported) {
         width = generic_state->frame_width_in_mbs * 4;
@@ -1684,6 +1684,7 @@ gen9_avc_kernel_scaling(VADriverContextP ctx,
     avc_priv_surface = obj_surface->private_data;
 
     memset(&surface_param, 0, sizeof(struct scaling_param));
+    printf("hme_type %d\n", hme_type);
     switch (hme_type) {
     case INTEL_ENC_HME_4x : {
         media_function = INTEL_MEDIA_STATE_4X_SCALING;
@@ -1698,11 +1699,12 @@ gen9_avc_kernel_scaling(VADriverContextP ctx,
         surface_param.output_surface = avc_priv_surface->scaled_4x_surface_obj ;
         surface_param.output_frame_width = generic_state->frame_width_4x ;
         surface_param.output_frame_height = generic_state->frame_height_4x ;
-
         surface_param.enable_mb_flatness_check = avc_state->flatness_check_enable;
         surface_param.enable_mb_variance_output = avc_state->mb_status_enable;
         surface_param.enable_mb_pixel_average_output = avc_state->mb_status_enable;
 
+        printf("surface_param.enable_mb_flatness_check %d\n", surface_param.enable_mb_flatness_check);
+        printf("avc_state->flatness_check_enable%d\n", avc_state->flatness_check_enable);
         surface_param.blk8x8_stat_enabled = 0 ;
         surface_param.use_4x_scaling  = 1 ;
         surface_param.use_16x_scaling = 0 ;
@@ -1781,8 +1783,9 @@ gen9_avc_kernel_scaling(VADriverContextP ctx,
         surface_param.scaling_out_use_16unorm_surf_fmt = 0 ;
         surface_param.scaling_out_use_32unorm_surf_fmt = 1 ;
     }
-
+    printf("surface_param.use_4x_scaling %d\n", surface_param.use_4x_scaling);
     if (surface_param.use_4x_scaling) {
+        printf("avc_state->mb_status_supported %d\n", avc_state->mb_status_supported);
         if (avc_state->mb_status_supported) {
             surface_param.enable_mb_flatness_check = 0;
             surface_param.mbv_proc_stat_enabled = (surface_param.use_4x_scaling) ? (avc_state->mb_status_enable || avc_state->flatness_check_enable) : 0 ;
@@ -1833,10 +1836,11 @@ gen9_avc_kernel_scaling(VADriverContextP ctx,
         debug_dumpobjsurface(ctx, surface_param.output_surface, "scale4x", "buffer", g_debug_enable, generic_state->total_frame_number);
         /*if (surface_param.mbv_proc_stat_enabled) {
          debug_dumpobjsurface(ctx, surface_param.pres_mbv_proc_stat_buffer, "scalex", "mbv_proc_stat_buffer", g_debug_enable, generic_state->total_frame_number);
-        }
-        if(surface_param.enable_mb_flatness_check){
-        debug_dumpobjsurface(ctx, surface_param.pres_flatness_check_surface, "scalex", "pres_flatness_surface_check", g_debug_enable, generic_state->total_frame_number);
         }*/
+        if (surface_param.enable_mb_flatness_check) {
+            //debug_dumpobjsurface(ctx, surface_param.pres_flatness_check_surface, "scalex", "pres_flatness_surface_check", g_debug_enable, generic_state->total_frame_number);
+            debug_dump_gpe(ctx, &avc_ctx->res_flatness_check_surface, "scalex", "pres_flatness_surface_check", g_debug_enable, generic_state->total_frame_number);
+        }
         break;
     }
     case INTEL_ENC_HME_16x : {
@@ -2789,6 +2793,7 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
                                    (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_CONSTANT_DATA_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_CONSTANT_DATA_INDEX));
 
     /* MB statistical data surface*/
+    // if (IS_GEN8(i965->intel.device_info)){
     gen9_add_buffer_gpe_surface(ctx,
                                 gpe_context,
                                 &avc_ctx->res_mb_status_buffer,
@@ -2796,7 +2801,7 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
                                 avc_ctx->res_mb_status_buffer.size,
                                 0,
                                 (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX));
-
+    //}
     return;
 }
 
@@ -4329,7 +4334,7 @@ gen9_avc_kernel_mbenc(VADriverContextP ctx,
         }
         obj_surface = encode_state->reconstructed_object;
         avc_priv_surface = obj_surface->private_data;
-        debug_dump_gpe(ctx, &avc_priv_surface->res_ref_pic_select_surface, "mbenc", "reconstructed_priv", g_debug_enable, generic_state->total_frame_number);
+        debug_dump_gpe(ctx, &avc_priv_surface->res_ref_pic_select_surface, "mbenc", "reconstructed_priv_ref_pic_select", g_debug_enable, generic_state->total_frame_number);
     }
     return VA_STATUS_SUCCESS;
 }
@@ -5815,7 +5820,7 @@ gen8_avc_send_surface_mbenc(VADriverContextP ctx,
                                            gpe_resource,
                                            1,
                                            I965_SURFACEFORMAT_R8_UNORM,
-                                           (is_g95 ? GEN95_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX : GEN9_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX));
+                                           GEN9_AVC_MBENC_FORCE_NONSKIP_MB_MAP_INDEX);
         }
 
         /*  if (avc_state->sfd_enable && generic_state->hme_enabled) {
@@ -5938,12 +5943,13 @@ gen8_avc_send_surface_scaling(VADriverContextP ctx,
                                     res_size / 4,
                                     0,
                                     GEN8_SCALING_FRAME_MBVPROCSTATS_DST_CM);
-    } else if (surface_param->enable_mb_flatness_check) {
+    }
+    if (surface_param->enable_mb_flatness_check) {
         gen9_add_buffer_2d_gpe_surface(ctx, gpe_context,
                                        surface_param->pres_flatness_check_surface,
                                        1,
                                        I965_SURFACEFORMAT_R8_UNORM,
-                                       GEN8_SCALING_FRAME_MBVPROCSTATS_DST_CM);
+                                       GEN8_SCALING_FRAME_FLATNESS_DST_CM);
     }
 
     return;
@@ -9514,6 +9520,7 @@ i965_avc_vme_context_init(VADriverContextP ctx, struct intel_encoder_context *en
     if (IS_GEN8(i965->intel.device_info)) {
         avc_state->brc_const_data_surface_width = 64;
         avc_state->brc_const_data_surface_height = 44;
+        avc_state->mb_status_supported = 0;
         //    avc_state->decouple_mbenc_curbe_from_brc_enable = 1;
     } else if (IS_SKL(i965->intel.device_info) ||
                IS_BXT(i965->intel.device_info)) {
