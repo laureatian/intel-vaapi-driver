@@ -1084,6 +1084,7 @@ gen9_avc_allocate_resources(VADriverContextP ctx,
                                                       "brc const data buffer");
         if (!allocate_flag)
             goto failed_allocation;
+        i965_zero_gpe_resource(&avc_ctx->res_brc_const_data_buffer);
 
         if (generic_state->brc_distortion_buffer_supported) {
             width = ALIGN(generic_state->downscaled_width_4x_in_mb * 8, 64);
@@ -2596,7 +2597,7 @@ gen9_avc_kernel_brc_init_reset(VADriverContextP ctx,
                                      &media_object_param);
     //debug_dump_curbe(ctx, gpe_context, "brc_init_reset", "dump", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_brc_init_reset_curbe_data));
     debug_dump_gpe(ctx, &avc_ctx->res_brc_history_buffer, "brc_init_reset", "history_buf", g_debug_enable, generic_state->total_frame_number);
-    debug_dump_gpe(ctx, &avc_ctx->res_brc_dist_data_surface, "brc_init_reset", "dist_buf", g_debug_enable, generic_state->total_frame_number);
+    debug_dump_gpe(ctx, &avc_ctx->res_brc_dist_data_surface, "brc_init_reset", "res_brc_dist", g_debug_enable, generic_state->total_frame_number);
     return VA_STATUS_SUCCESS;
 }
 
@@ -2724,9 +2725,11 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
     struct i965_gpe_context * gpe_context_mbenc = param->gpe_context_mbenc;
     struct avc_enc_state * avc_state = (struct avc_enc_state *)vme_context->private_enc_state;
     unsigned char is_g95 = 0;
+    struct generic_enc_codec_state * generic_state = (struct generic_enc_codec_state *)vme_context->generic_enc_state;
 
     if (IS_SKL(i965->intel.device_info) ||
-        IS_BXT(i965->intel.device_info))
+        IS_BXT(i965->intel.device_info) ||
+        IS_GEN8(i965->intel.device_info))
         is_g95 = 0;
     else if (IS_KBL(i965->intel.device_info) ||
              IS_GLK(i965->intel.device_info))
@@ -2767,7 +2770,7 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
                                 avc_ctx->res_brc_image_state_write_buffer.size,
                                 0,
                                 (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_IMAGE_STATE_WRITE_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_IMAGE_STATE_WRITE_INDEX));
-
+    printf("avc_state->mbenc_brc_buffer_size %d\n", avc_state->mbenc_brc_buffer_size);
     if (avc_state->mbenc_brc_buffer_size > 0) {
         gen9_add_buffer_gpe_surface(ctx,
                                     gpe_context,
@@ -2777,6 +2780,8 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
                                     0,
                                     GEN95_AVC_FRAME_BRC_UPDATE_MBENC_CURBE_WRITE_INDEX);
     } else {
+        // debug_dumpobjsurface(ctx, gpe_context_mbenc->dynamic_state.bo , "mb_brc_update", "gpe_conetxt_mbenc_bo", g_debug_enable, generic_state->total_frame_number);
+        debug_dump_bo(ctx, gpe_context_mbenc->dynamic_state.bo, "before_brc_frame_update", "gpe_context_mbenc_bo", g_debug_enable, generic_state->total_frame_number);
         /*  Mbenc curbe input buffer */
         gen9_add_dri_buffer_gpe_surface(ctx,
                                         gpe_context,
@@ -2812,15 +2817,15 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
                                    (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_CONSTANT_DATA_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_CONSTANT_DATA_INDEX));
 
     /* MB statistical data surface*/
-    // if (IS_GEN8(i965->intel.device_info)){
-    gen9_add_buffer_gpe_surface(ctx,
-                                gpe_context,
-                                &avc_ctx->res_mb_status_buffer,
-                                0,
-                                avc_ctx->res_mb_status_buffer.size,
-                                0,
-                                (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX));
-    //}
+    if (IS_GEN8(i965->intel.device_info)) {
+        gen9_add_buffer_gpe_surface(ctx,
+                                    gpe_context,
+                                    &avc_ctx->res_mbbrc_mb_qp_data_surface,
+                                    0,
+                                    avc_ctx->res_mbbrc_mb_qp_data_surface.size,
+                                    1,
+                                    (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX));
+    }
     return;
 }
 
@@ -2919,11 +2924,14 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     generic_ctx->pfn_set_curbe_brc_frame_update(ctx, encode_state, gpe_context, encoder_context, &curbe_brc_param);
 
     /* load brc constant data, is it same as mbenc mb brc constant data? no.*/
-    if (avc_state->multi_pre_enable) {
-        gen9_avc_init_brc_const_data(ctx, encode_state, encoder_context);
-    } else {
-        gen9_avc_init_brc_const_data_old(ctx, encode_state, encoder_context);
-    }
+    debug_dump_gpe(ctx, &avc_ctx->res_brc_const_data_buffer, "frame_update_brc", "before_init_const_data_buf", g_debug_enable, generic_state->total_frame_number);
+    printf("avc_state->multi_pre_enable %d\n", avc_state->multi_pre_enable);
+    //  if (avc_state->multi_pre_enable) {
+    //    gen9_avc_init_brc_const_data(ctx, encode_state, encoder_context);
+    //  } else {
+    //    gen9_avc_init_brc_const_data_old(ctx, encode_state, encoder_context);
+    //  }
+    debug_dump_gpe(ctx, &avc_ctx->res_brc_const_data_buffer, "frame_update_brc", "init_const_data_buf", g_debug_enable, generic_state->total_frame_number);
     /* image state construct*/
     gen9_avc_set_image_state(ctx, encode_state, encoder_context, &(avc_ctx->res_brc_image_state_read_buffer));
     /* set surface frame mbenc*/
@@ -2950,8 +2958,10 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     debug_dump_gpe(ctx, &avc_ctx->res_brc_image_state_read_buffer, "frame_update_brc", "image_read_buf", g_debug_enable, generic_state->total_frame_number);
     debug_dump_gpe(ctx, &avc_ctx->res_brc_image_state_write_buffer, "frame_update_brc", "image_write_buf", g_debug_enable, generic_state->total_frame_number);
     debug_dump_gpe(ctx, &avc_ctx->res_brc_pre_pak_statistics_output_buffer, "frame_update_brc", "pak_statistics_buf", g_debug_enable, generic_state->total_frame_number);
-    debug_dump_gpe(ctx, &avc_ctx->res_brc_dist_data_surface, "frame_update_brc", "dist_buf", g_debug_enable, generic_state->total_frame_number);
+    debug_dump_gpe(ctx, &avc_ctx->res_brc_dist_data_surface, "frame_update_brc", "res_brc_dist_buf", g_debug_enable, generic_state->total_frame_number);
     debug_dump_gpe(ctx, &avc_ctx->res_brc_const_data_buffer, "frame_update_brc", "const_data_buf", g_debug_enable, generic_state->total_frame_number);
+    debug_dump_gpe(ctx, &avc_ctx->res_mbbrc_mb_qp_data_surface, "frame_update_brc", "res_mbbrc_qp_data_buf", g_debug_enable, generic_state->total_frame_number);
+    debug_dump_bo(ctx, (curbe_brc_param.gpe_context_mbenc)->dynamic_state.bo, "brc_frame_update", "gpe_context_mbenc_bo", g_debug_enable, generic_state->total_frame_number);
     return VA_STATUS_SUCCESS;
 }
 
@@ -4323,6 +4333,9 @@ gen9_avc_kernel_mbenc(VADriverContextP ctx,
     if (mbenc_i_frame_dist_in_use) {
         //debug_dump_curbe(ctx, gpe_context, "mbenc", "IFrame_dump", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_mbenc_curbe_data));
         //debug_dump_gpe(ctx,&avc_ctx->res_mbenc_brc_buffer,"mbenc","brc_mbenc_curbe_i_frame",g_debug_enable,generic_state->total_frame_number);
+        debug_dump_gpe(ctx, &avc_ctx->res_mbbrc_mb_qp_data_surface, "mbenc", "res_mbbrc_mb_qp_data_surface", g_debug_enable, generic_state->total_frame_number);
+        debug_dump_gpe(ctx, &avc_ctx->res_brc_dist_data_surface, "mbenc", "res_brc_dist_surface", g_debug_enable, generic_state->total_frame_number);
+        debug_dumpobjsurface(ctx, encode_state->reconstructed_object, "mbenc", "reconstructed_surface", g_debug_enable, generic_state->total_frame_number);
     } else {
         debug_dump_avc_mbcode_mv(ctx, encode_state->reconstructed_object, "mbenc", "mb_code", g_debug_enable, generic_state->total_frame_number);
         //debug_dump_curbe(ctx, gpe_context, "mbenc", "dump", g_debug_enable, generic_state->total_frame_number, sizeof(gen9_avc_mbenc_curbe_data));
@@ -4354,6 +4367,10 @@ gen9_avc_kernel_mbenc(VADriverContextP ctx,
         obj_surface = encode_state->reconstructed_object;
         avc_priv_surface = obj_surface->private_data;
         debug_dump_gpe(ctx, &avc_priv_surface->res_ref_pic_select_surface, "mbenc", "reconstructed_priv_ref_pic_select", g_debug_enable, generic_state->total_frame_number);
+        if (avc_state->mb_qp_data_enable) {
+            debug_dump_gpe(ctx, &(avc_ctx->res_mb_qp_data_surface), "mbenc_res_mb", "qp_data_surface", g_debug_enable, generic_state->total_frame_number);
+        }
+
     }
     return VA_STATUS_SUCCESS;
 }
@@ -6367,7 +6384,7 @@ gen8_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
         cmd->dw14.qp_index_of_cur_pic = avc_priv_surface->frame_idx ; //do not know this. use -1
     }
 
-    cmd->dw5.max_num_paks = generic_state->num_pak_passes ;
+    cmd->dw5.max_num_paks = 1; // generic_state->num_pak_passes ;
     if (avc_state->min_max_qp_enable) {
         switch (generic_state->frame_type) {
         case SLICE_TYPE_I:
