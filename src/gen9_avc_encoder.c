@@ -679,6 +679,20 @@ intel_avc_get_kernel_header_and_size(void *pvbinary,
         next_krnoffset = pnext_header->kernel_start_pointer << 6;
     }
     ret_kernel->size = next_krnoffset - (pcurr_header->kernel_start_pointer << 6);
+    int i = 0;
+    printf("ret_kernel->size %d\n", ret_kernel->size);;
+    if (operation == INTEL_GENERIC_ENC_MBENC && krnstate_idx == 0) {
+        FILE* frameupdatekernel = fopen("mbenc0.txt", "w");
+        for (i = 0; i < ret_kernel->size / 4; i++) {
+            fprintf(frameupdatekernel, "%08x ", (ret_kernel->bin)[i]);
+            if (i % 4 == 3) {
+                fprintf(frameupdatekernel, "\n");
+            }
+
+        }
+
+
+    }
 
     return true;
 }
@@ -2823,7 +2837,7 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
                                     &avc_ctx->res_mbbrc_mb_qp_data_surface,
                                     0,
                                     avc_ctx->res_mbbrc_mb_qp_data_surface.size,
-                                    1,
+                                    0,
                                     (is_g95 ? GEN95_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX : GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX));
     }
     return;
@@ -2856,7 +2870,8 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     /* the following set the mbenc curbe*/
     struct mbenc_param curbe_mbenc_param ;
     struct brc_param curbe_brc_param ;
-
+    printf("mb_const_data_buffer_in_use %d\n", mb_const_data_buffer_in_use);
+    printf("mb_qp_buffer_in_use %d\n", mb_qp_buffer_in_use);
     mb_const_data_buffer_in_use =
         generic_state->mb_brc_enabled ||
         roi_enable ||
@@ -2867,7 +2882,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
         generic_state->mb_brc_enabled ||
         generic_state->brc_roi_enable ||
         avc_state->mb_qp_data_enable;
-
+    printf("generic_state->kernel_mode %d\n", generic_state->kernel_mode);
     switch (generic_state->kernel_mode) {
     case INTEL_ENC_KERNEL_NORMAL : {
         kernel_idx = MBENC_KERNEL_BASE + GEN9_AVC_KERNEL_MBENC_NORMAL_I;
@@ -2914,6 +2929,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     media_function = INTEL_MEDIA_STATE_BRC_UPDATE;
     kernel_idx = GEN9_AVC_KERNEL_BRC_FRAME_UPDATE;
     gpe_context = &(avc_ctx->context_brc.gpe_contexts[kernel_idx]);
+    printf("brc frame update kernel_idx %d\n", kernel_idx);
     curbe_brc_param.gpe_context_brc_frame_update = gpe_context;
 
     gpe->context_init(ctx, gpe_context);
@@ -2927,7 +2943,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     debug_dump_gpe(ctx, &avc_ctx->res_brc_const_data_buffer, "frame_update_brc", "before_init_const_data_buf", g_debug_enable, generic_state->total_frame_number);
     printf("avc_state->multi_pre_enable %d\n", avc_state->multi_pre_enable);
     //  if (avc_state->multi_pre_enable) {
-    //    gen9_avc_init_brc_const_data(ctx, encode_state, encoder_context);
+    //   gen9_avc_init_brc_const_data(ctx, encode_state, encoder_context);
     //  } else {
     //    gen9_avc_init_brc_const_data_old(ctx, encode_state, encoder_context);
     //  }
