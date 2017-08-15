@@ -647,7 +647,7 @@ intel_avc_get_kernel_header_and_size(void *pvbinary,
 
     if (!pvbinary || !ret_kernel)
         return false;
-
+    unsigned  int* start;
     bin_start = (char *)pvbinary;
     pkh_table = (gen9_avc_encoder_kernel_header *)pvbinary;
     pinvalid_entry = &(pkh_table->static_detection) + 1;
@@ -683,8 +683,9 @@ intel_avc_get_kernel_header_and_size(void *pvbinary,
     printf("ret_kernel->size %d\n", ret_kernel->size);;
     if (operation == INTEL_GENERIC_ENC_MBENC && krnstate_idx == 0) {
         FILE* frameupdatekernel = fopen("mbenc0.txt", "w");
+        start = (unsigned int*)ret_kernel->bin;
         for (i = 0; i < ret_kernel->size / 4; i++) {
-            fprintf(frameupdatekernel, "%08x ", (ret_kernel->bin)[i]);
+            fprintf(frameupdatekernel, "%08x ", (start)[i]);
             if (i % 4 == 3) {
                 fprintf(frameupdatekernel, "\n");
             }
@@ -1988,6 +1989,98 @@ gen9_avc_init_mfx_avc_img_state(VADriverContextP ctx,
     /* set paramters DW19/DW20 for slices */
 }
 
+static void
+gen8_avc_init_mfx_avc_img_state(VADriverContextP ctx,
+                                struct encode_state *encode_state,
+                                struct intel_encoder_context *encoder_context,
+                                struct gen8_mfx_avc_img_state *pstate)
+{
+    struct encoder_vme_mfc_context * vme_context = (struct encoder_vme_mfc_context *)encoder_context->vme_context;
+    struct generic_enc_codec_state * generic_state = (struct generic_enc_codec_state *)vme_context->generic_enc_state;
+    struct avc_enc_state * avc_state = (struct avc_enc_state *)vme_context->private_enc_state;
+
+    VAEncSequenceParameterBufferH264 *seq_param = avc_state->seq_param;
+    VAEncPictureParameterBufferH264  *pic_param = avc_state->pic_param;
+
+    memset(pstate, 0, sizeof(*pstate));
+
+    pstate->dw0.dword_length = (sizeof(struct gen8_mfx_avc_img_state)) / 4 - 2;
+    pstate->dw0.command_sub_opcode_b = 0;
+    pstate->dw0.command_sub_opcode_a = 0;
+    pstate->dw0.command_opcode = 1;
+    pstate->dw0.command_pipeline = 2;
+    pstate->dw0.command_type = 3;
+
+    pstate->dw1.frame_size_in_mbs = generic_state->frame_width_in_mbs * generic_state->frame_height_in_mbs ;
+
+    pstate->dw2.frame_width_in_mbs_minus1 = generic_state->frame_width_in_mbs - 1;
+    pstate->dw2.frame_height_in_mbs_minus1 = generic_state->frame_height_in_mbs - 1;
+
+    pstate->dw3.image_structure = 0;//frame is zero
+    pstate->dw3.weighted_bipred_idc = pic_param->pic_fields.bits.weighted_bipred_idc;
+    pstate->dw3.weighted_pred_flag = pic_param->pic_fields.bits.weighted_pred_flag;
+    //pstate->dw3.brc_domain_rate_control_enable = 0;//0,set for non-vdenc mode;
+    pstate->dw3.inter_mb_conf_flag = 0;
+    pstate->dw3.intra_mb_conf_flag = 0;
+    pstate->dw3.chroma_qp_offset = pic_param->chroma_qp_index_offset;
+    pstate->dw3.second_chroma_qp_offset = pic_param->second_chroma_qp_index_offset;
+
+    pstate->dw4.field_picture_flag = 0;
+    pstate->dw4.mbaff_mode_active = seq_param->seq_fields.bits.mb_adaptive_frame_field_flag;
+    pstate->dw4.frame_mb_only_flag = seq_param->seq_fields.bits.frame_mbs_only_flag;
+    pstate->dw4.transform_8x8_idct_mode_flag = pic_param->pic_fields.bits.transform_8x8_mode_flag;
+    pstate->dw4.direct_8x8_interface_flag = seq_param->seq_fields.bits.direct_8x8_inference_flag;
+    pstate->dw4.constrained_intra_prediction_flag = pic_param->pic_fields.bits.constrained_intra_pred_flag;
+    pstate->dw4.entropy_coding_flag = pic_param->pic_fields.bits.entropy_coding_mode_flag;
+    pstate->dw4.mb_mv_format_flag = 1;
+    pstate->dw4.chroma_format_idc = seq_param->seq_fields.bits.chroma_format_idc;
+    pstate->dw4.mv_unpacked_flag = 1;
+    pstate->dw4.insert_test_flag = 0;
+    pstate->dw4.load_slice_pointer_flag = 0;
+    pstate->dw4.macroblock_stat_enable = 0;        /* disable in the first pass */
+    pstate->dw4.minimum_frame_size = 0;
+    pstate->dw5.intra_mb_max_bit_flag = 1;
+    pstate->dw5.inter_mb_max_bit_flag = 1;
+    pstate->dw5.frame_size_over_flag = 1;
+    pstate->dw5.frame_size_under_flag = 1;
+    pstate->dw5.intra_mb_ipcm_flag = 1;
+    pstate->dw5.mb_rate_ctrl_flag = 0;
+    pstate->dw5.non_first_pass_flag = 0;
+    pstate->dw5.aq_enable = pstate->dw5.aq_rounding = 0;
+    pstate->dw5.aq_chroma_disable = 1;
+    if (pstate->dw4.entropy_coding_flag && (avc_state->tq_enable)) {
+        pstate->dw5.aq_enable = avc_state->tq_enable;
+        pstate->dw5.aq_rounding = avc_state->tq_rounding;
+    } else {
+        pstate->dw5.aq_rounding = 0;
+    }
+
+    pstate->dw6.intra_mb_max_size = 2700;
+    pstate->dw6.inter_mb_max_size = 4095;
+
+    pstate->dw8.slice_delta_qp_max0 = 0;
+    pstate->dw8.slice_delta_qp_max1 = 0;
+    pstate->dw8.slice_delta_qp_max2 = 0;
+    pstate->dw8.slice_delta_qp_max3 = 0;
+
+    pstate->dw9.slice_delta_qp_min0 = 0;
+    pstate->dw9.slice_delta_qp_min1 = 0;
+    pstate->dw9.slice_delta_qp_min2 = 0;
+    pstate->dw9.slice_delta_qp_min3 = 0;
+
+    pstate->dw10.frame_bitrate_min = 0;
+    pstate->dw10.frame_bitrate_min_unit = 1;
+    pstate->dw10.frame_bitrate_min_unit_mode = 1;
+    pstate->dw10.frame_bitrate_max = (1 << 14) - 1;
+    pstate->dw10.frame_bitrate_max_unit = 1;
+    pstate->dw10.frame_bitrate_max_unit_mode = 1;
+
+    pstate->dw11.frame_bitrate_min_delta = 0;
+    pstate->dw11.frame_bitrate_max_delta = 0;
+
+    // pstate->dw12.vad_error_logic = 1;
+    /* set paramters DW19/DW20 for slices */
+}
 void gen9_avc_set_image_state(VADriverContextP ctx,
                               struct encode_state *encode_state,
                               struct intel_encoder_context *encoder_context,
@@ -2020,6 +2113,48 @@ void gen9_avc_set_image_state(VADriverContextP ctx,
         cmd.dw5.mb_rate_ctrl_flag = 0;
         memcpy(pdata, &cmd, sizeof(struct gen9_mfx_avc_img_state));
         data = (unsigned int *)(pdata + sizeof(struct gen9_mfx_avc_img_state));
+        *data = MI_BATCH_BUFFER_END;
+
+        pdata += INTEL_AVC_IMAGE_STATE_CMD_SIZE;
+    }
+    i965_unmap_gpe_resource(gpe_resource);
+    return;
+}
+
+void gen8_avc_set_image_state(VADriverContextP ctx,
+                              struct encode_state *encode_state,
+                              struct intel_encoder_context *encoder_context,
+                              struct i965_gpe_resource *gpe_resource)
+{
+    struct encoder_vme_mfc_context * pak_context = (struct encoder_vme_mfc_context *)encoder_context->vme_context;
+    struct generic_enc_codec_state * generic_state = (struct generic_enc_codec_state *)pak_context->generic_enc_state;
+    char *pdata;
+    int i;
+    unsigned int * data;
+    struct gen8_mfx_avc_img_state cmd;
+
+    pdata = i965_map_gpe_resource(gpe_resource);
+
+    if (!pdata)
+        return;
+
+    gen8_avc_init_mfx_avc_img_state(ctx, encode_state, encoder_context, &cmd);
+    for (i = 0; i < generic_state->num_pak_passes; i++) {
+
+        if (i == 0) {
+            cmd.dw4.macroblock_stat_enable = 0;
+            cmd.dw5.non_first_pass_flag = 0;
+        } else {
+            cmd.dw4.macroblock_stat_enable = 1;
+            cmd.dw5.non_first_pass_flag = 1;
+            cmd.dw5.intra_mb_ipcm_flag = 1;
+            cmd.dw3.inter_mb_conf_flag = 1;
+            cmd.dw3.intra_mb_conf_flag = 1;
+
+        }
+        cmd.dw5.mb_rate_ctrl_flag = 0;
+        memcpy(pdata, &cmd, sizeof(struct gen8_mfx_avc_img_state));
+        data = (unsigned int *)(pdata + sizeof(struct gen8_mfx_avc_img_state));
         *data = MI_BATCH_BUFFER_END;
 
         pdata += INTEL_AVC_IMAGE_STATE_CMD_SIZE;
@@ -2748,6 +2883,7 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
     else if (IS_KBL(i965->intel.device_info) ||
              IS_GLK(i965->intel.device_info))
         is_g95 = 1;
+    printf("is_g95%d\n", is_g95);
 
     /* brc history buffer*/
     gen9_add_buffer_gpe_surface(ctx,
@@ -2843,6 +2979,115 @@ gen9_avc_send_surface_brc_frame_update(VADriverContextP ctx,
     return;
 }
 
+static void
+gen8_avc_send_surface_brc_frame_update(VADriverContextP ctx,
+                                       struct encode_state *encode_state,
+                                       struct i965_gpe_context *gpe_context,
+                                       struct intel_encoder_context *encoder_context,
+                                       void * param_brc)
+{
+    struct i965_driver_data *i965 = i965_driver_data(ctx);
+    struct encoder_vme_mfc_context * vme_context = (struct encoder_vme_mfc_context *)encoder_context->vme_context;
+    struct i965_avc_encoder_context * avc_ctx = (struct i965_avc_encoder_context *)vme_context->private_enc_ctx;
+    struct brc_param * param = (struct brc_param *)param_brc ;
+    struct i965_gpe_context * gpe_context_mbenc = param->gpe_context_mbenc;
+    struct avc_enc_state * avc_state = (struct avc_enc_state *)vme_context->private_enc_state;
+    struct generic_enc_codec_state * generic_state = (struct generic_enc_codec_state *)vme_context->generic_enc_state;
+
+    /* brc history buffer*/
+    gen9_add_buffer_gpe_surface(ctx,
+                                gpe_context,
+                                &avc_ctx->res_brc_history_buffer,
+                                0,
+                                avc_ctx->res_brc_history_buffer.size,
+                                0,
+                                GEN9_AVC_FRAME_BRC_UPDATE_HISTORY_INDEX);
+
+    /* previous pak buffer*/
+    gen9_add_buffer_gpe_surface(ctx,
+                                gpe_context,
+                                &avc_ctx->res_brc_pre_pak_statistics_output_buffer,
+                                0,
+                                avc_ctx->res_brc_pre_pak_statistics_output_buffer.size,
+                                0,
+                                GEN9_AVC_FRAME_BRC_UPDATE_PAK_STATISTICS_OUTPUT_INDEX);
+
+    /* image state command buffer read only*/
+    gen9_add_buffer_gpe_surface(ctx,
+                                gpe_context,
+                                &avc_ctx->res_brc_image_state_read_buffer,
+                                0,
+                                avc_ctx->res_brc_image_state_read_buffer.size,
+                                0,
+                                GEN9_AVC_FRAME_BRC_UPDATE_IMAGE_STATE_READ_INDEX);
+
+    /* image state command buffer write only*/
+    gen9_add_buffer_gpe_surface(ctx,
+                                gpe_context,
+                                &avc_ctx->res_brc_image_state_write_buffer,
+                                0,
+                                avc_ctx->res_brc_image_state_write_buffer.size,
+                                0,
+                                GEN9_AVC_FRAME_BRC_UPDATE_IMAGE_STATE_WRITE_INDEX);
+    printf("avc_state->mbenc_brc_buffer_size %d\n", avc_state->mbenc_brc_buffer_size);
+    if (avc_state->mbenc_brc_buffer_size > 0) {
+        gen9_add_buffer_gpe_surface(ctx,
+                                    gpe_context,
+                                    &(avc_ctx->res_mbenc_brc_buffer),
+                                    0,
+                                    avc_ctx->res_mbenc_brc_buffer.size,
+                                    0,
+                                    GEN95_AVC_FRAME_BRC_UPDATE_MBENC_CURBE_WRITE_INDEX);
+    } else {
+        // debug_dumpobjsurface(ctx, gpe_context_mbenc->dynamic_state.bo , "mb_brc_update", "gpe_conetxt_mbenc_bo", g_debug_enable, generic_state->total_frame_number);
+        debug_dump_bo(ctx, gpe_context_mbenc->dynamic_state.bo, "before_brc_frame_update", "gpe_context_mbenc_bo", g_debug_enable, generic_state->total_frame_number);
+        /*  Mbenc curbe input buffer */
+        gen9_add_dri_buffer_gpe_surface(ctx,
+                                        gpe_context,
+                                        gpe_context_mbenc->dynamic_state.bo,
+                                        0,
+                                        ALIGN(gpe_context_mbenc->curbe.length, 64),
+                                        gpe_context_mbenc->curbe.offset,
+                                        GEN9_AVC_FRAME_BRC_UPDATE_MBENC_CURBE_READ_INDEX);
+        /* Mbenc curbe output buffer */
+        gen9_add_dri_buffer_gpe_surface(ctx,
+                                        gpe_context,
+                                        gpe_context_mbenc->dynamic_state.bo,
+                                        0,
+                                        ALIGN(gpe_context_mbenc->curbe.length, 64),
+                                        gpe_context_mbenc->curbe.offset,
+                                        GEN9_AVC_FRAME_BRC_UPDATE_MBENC_CURBE_WRITE_INDEX);
+    }
+
+    /* AVC_ME Distortion 2D surface buffer,input/output. is it res_brc_dist_data_surface*/
+    gen9_add_buffer_2d_gpe_surface(ctx,
+                                   gpe_context,
+                                   &avc_ctx->res_brc_dist_data_surface,
+                                   1,
+                                   I965_SURFACEFORMAT_R8_UNORM,
+                                   GEN9_AVC_FRAME_BRC_UPDATE_DISTORTION_INDEX);
+
+    /* BRC const data 2D surface buffer */
+    gen9_add_buffer_2d_gpe_surface(ctx,
+                                   gpe_context,
+                                   &avc_ctx->res_brc_const_data_buffer,
+                                   1,
+                                   I965_SURFACEFORMAT_R8_UNORM,
+                                   GEN9_AVC_FRAME_BRC_UPDATE_CONSTANT_DATA_INDEX);
+
+    /* MB statistical data surface*/
+
+    gen9_add_buffer_gpe_surface(ctx,
+                                gpe_context,
+                                &avc_ctx->res_mbbrc_mb_qp_data_surface,
+                                0,
+                                avc_ctx->res_mbbrc_mb_qp_data_surface.size,
+                                0,
+                                GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX);
+
+    return;
+}
+
 static VAStatus
 gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
                                  struct encode_state *encode_state,
@@ -2906,7 +3151,7 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     } else if (generic_state->frame_type == SLICE_TYPE_B) {
         kernel_idx += 2;
     }
-
+    printf("mbenc kernel idx%d \n", kernel_idx);
     gpe_context = &(avc_ctx->context_mbenc.gpe_contexts[kernel_idx]);
     gpe->context_init(ctx, gpe_context);
 
@@ -2942,14 +3187,18 @@ gen9_avc_kernel_brc_frame_update(VADriverContextP ctx,
     /* load brc constant data, is it same as mbenc mb brc constant data? no.*/
     debug_dump_gpe(ctx, &avc_ctx->res_brc_const_data_buffer, "frame_update_brc", "before_init_const_data_buf", g_debug_enable, generic_state->total_frame_number);
     printf("avc_state->multi_pre_enable %d\n", avc_state->multi_pre_enable);
-    //  if (avc_state->multi_pre_enable) {
-    //   gen9_avc_init_brc_const_data(ctx, encode_state, encoder_context);
-    //  } else {
-    //    gen9_avc_init_brc_const_data_old(ctx, encode_state, encoder_context);
-    //  }
+    if (avc_state->multi_pre_enable) {
+        gen9_avc_init_brc_const_data(ctx, encode_state, encoder_context);
+    } else {
+        gen9_avc_init_brc_const_data_old(ctx, encode_state, encoder_context);
+    }
     debug_dump_gpe(ctx, &avc_ctx->res_brc_const_data_buffer, "frame_update_brc", "init_const_data_buf", g_debug_enable, generic_state->total_frame_number);
     /* image state construct*/
-    gen9_avc_set_image_state(ctx, encode_state, encoder_context, &(avc_ctx->res_brc_image_state_read_buffer));
+    if (IS_GEN8(i965->intel.device_info)) {
+        gen8_avc_set_image_state(ctx, encode_state, encoder_context, &(avc_ctx->res_brc_image_state_read_buffer));
+    } else {
+        gen9_avc_set_image_state(ctx, encode_state, encoder_context, &(avc_ctx->res_brc_image_state_read_buffer));
+    }
     /* set surface frame mbenc*/
     generic_ctx->pfn_send_brc_frame_update_surface(ctx, encode_state, gpe_context, encoder_context, &curbe_brc_param);
 
@@ -6400,7 +6649,7 @@ gen8_avc_set_curbe_brc_frame_update(VADriverContextP ctx,
         cmd->dw14.qp_index_of_cur_pic = avc_priv_surface->frame_idx ; //do not know this. use -1
     }
 
-    cmd->dw5.max_num_paks = 1; // generic_state->num_pak_passes ;
+    cmd->dw5.max_num_paks = generic_state->num_pak_passes ;
     if (avc_state->min_max_qp_enable) {
         switch (generic_state->frame_type) {
         case SLICE_TYPE_I:
@@ -7660,7 +7909,7 @@ gen8_avc_kernel_init(VADriverContextP ctx,
     generic_ctx->pfn_send_me_surface = gen8_avc_send_surface_me;
     generic_ctx->pfn_send_mbenc_surface = gen8_avc_send_surface_mbenc;
     generic_ctx->pfn_send_brc_init_reset_surface = gen9_avc_send_surface_brc_init_reset;
-    generic_ctx->pfn_send_brc_frame_update_surface = gen9_avc_send_surface_brc_frame_update;
+    generic_ctx->pfn_send_brc_frame_update_surface = gen8_avc_send_surface_brc_frame_update;
     //generic_ctx->pfn_send_brc_mb_update_surface = gen9_avc_send_surface_brc_mb_update;
     generic_ctx->pfn_send_sfd_surface = gen9_avc_send_surface_sfd;
     //generic_ctx->pfn_send_wp_surface = gen9_avc_send_surface_wp;

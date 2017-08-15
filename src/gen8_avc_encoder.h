@@ -81,6 +81,170 @@ typedef struct _gen8_avc_encoder_kernel_header {
     kernel_header static_detection;
 } gen8_avc_encoder_kernel_header;
 
+struct gen8_mfx_avc_img_state {
+    union {
+        struct {
+            uint32_t dword_length: 16;
+            uint32_t command_sub_opcode_b: 5;
+            uint32_t command_sub_opcode_a: 3;
+            uint32_t command_opcode: 3;
+            uint32_t command_pipeline: 2;
+            uint32_t command_type: 3;
+        };
+
+        uint32_t value;
+    } dw0;
+
+    struct {
+        uint32_t frame_size_in_mbs: 16; //minus1
+        uint32_t pad0: 16;
+    } dw1;
+
+    struct {
+        uint32_t frame_width_in_mbs_minus1: 8; //minus1
+        uint32_t pad0: 8;
+        uint32_t frame_height_in_mbs_minus1: 8; //minus1
+        uint32_t pad1: 8;
+    } dw2;
+
+    struct {
+        uint32_t pad0: 8;
+        uint32_t image_structure: 2;
+        uint32_t weighted_bipred_idc: 2;
+        uint32_t weighted_pred_flag: 1;
+        uint32_t inter_mb_conf_flag: 1;
+        uint32_t intra_mb_conf_flag: 1;
+        uint32_t pad1: 1;
+        uint32_t chroma_qp_offset: 5;
+        uint32_t pad3: 3;
+        uint32_t second_chroma_qp_offset: 5;
+        uint32_t pad4: 3;
+    } dw3;
+
+    struct {
+        uint32_t field_picture_flag: 1;
+        uint32_t mbaff_mode_active: 1;
+        uint32_t frame_mb_only_flag: 1;
+        uint32_t transform_8x8_idct_mode_flag: 1;
+        uint32_t direct_8x8_interface_flag: 1;
+        uint32_t constrained_intra_prediction_flag: 1;
+        uint32_t current_img_dispoable_flag: 1;
+        uint32_t entropy_coding_flag: 1;
+        uint32_t mb_mv_format_flag: 1;
+        uint32_t pad0: 1;
+        uint32_t chroma_format_idc: 2;
+        uint32_t mv_unpacked_flag: 1;
+        uint32_t insert_test_flag: 1;
+        uint32_t load_slice_pointer_flag: 1;
+        uint32_t macroblock_stat_enable: 1;
+        uint32_t minimum_frame_size: 16;
+    } dw4;
+
+    struct {
+        uint32_t intra_mb_max_bit_flag: 1;
+        uint32_t inter_mb_max_bit_flag: 1;
+        uint32_t frame_size_over_flag: 1;
+        uint32_t frame_size_under_flag: 1;
+        uint32_t pad0: 3;
+        uint32_t intra_mb_ipcm_flag: 1;
+        uint32_t pad1: 1;
+        uint32_t mb_rate_ctrl_flag: 1;
+        uint32_t min_frame_size_units: 2;
+        uint32_t inter_mb_zero_cbp_flag: 1; //?change
+        uint32_t pad2: 3;
+        uint32_t non_first_pass_flag: 1;
+        uint32_t pad3: 10;
+        uint32_t aq_chroma_disable: 1;
+        uint32_t aq_rounding: 3;
+        uint32_t aq_enable: 1;
+    } dw5;
+
+    struct {
+        uint32_t intra_mb_max_size: 12;
+        uint32_t pad0: 4;
+        uint32_t inter_mb_max_size: 12;
+        uint32_t pad1: 4;
+    } dw6;
+
+    struct {
+        uint32_t pad0: 32;
+    } dw7;
+
+    struct {
+        uint32_t slice_delta_qp_max0: 8;
+        uint32_t slice_delta_qp_max1: 8;
+        uint32_t slice_delta_qp_max2: 8;
+        uint32_t slice_delta_qp_max3: 8;
+    } dw8;
+
+    struct {
+        uint32_t slice_delta_qp_min0: 8;
+        uint32_t slice_delta_qp_min1: 8;
+        uint32_t slice_delta_qp_min2: 8;
+        uint32_t slice_delta_qp_min3: 8;
+    } dw9;
+
+    struct {
+        uint32_t frame_bitrate_min: 14;
+        uint32_t frame_bitrate_min_unit_mode: 1;
+        uint32_t frame_bitrate_min_unit: 1;
+        uint32_t frame_bitrate_max: 14;
+        uint32_t frame_bitrate_max_unit_mode: 1;
+        uint32_t frame_bitrate_max_unit: 1;
+    } dw10;
+
+    struct {
+        uint32_t frame_bitrate_min_delta: 15;
+        uint32_t pad0: 1;
+        uint32_t frame_bitrate_max_delta: 15;
+        uint32_t pad1: 1;
+    } dw11;
+
+    struct {
+        uint32_t pad0: 32;
+    } dw12;
+
+    struct {
+        uint32_t pic_qp_init_minus26: 8;
+        uint32_t pic_num_ref_idx_l0_active_minus1: 6;
+        uint32_t pad0: 2;
+        uint32_t pic_num_ref_idx_l1_active_minus1: 6;
+        uint32_t pad1: 2;
+        uint32_t num_ref_frames: 5;
+        uint32_t is_curr_pic_has_mmco5: 1;
+        uint32_t pad2: 2;
+    } dw13;
+
+    struct {
+        uint32_t pic_order_present_flag: 1;
+        uint32_t delta_pic_order_always_zero_flag: 1;
+        uint32_t pic_order_cnt_type: 2;
+        uint32_t pad0: 4;
+        uint32_t slice_group_map_type: 3;
+        uint32_t redundant_pic_cnt_present_flag: 1;
+        uint32_t num_slice_groups_minus1: 3;
+        uint32_t deblock_filter_ctrl_present_flag: 1;
+        uint32_t log2_max_frame_num_minus4: 8;
+        uint32_t log2_max_pic_order_cnt_lsb_minus4: 8;
+    } dw14;
+
+    struct {
+        uint32_t slice_group_change_rate: 16;
+        uint32_t curr_pic_frame_num: 16;
+    } dw15;
+
+    struct {
+        uint32_t current_frame_view_id: 10;
+        uint32_t pad0: 2;
+        uint32_t max_view_idx_l0: 4;
+        uint32_t pad1: 2;
+        uint32_t max_view_idx_l1: 4;
+        uint32_t pad2: 9;
+        uint32_t inter_view_order_disable: 1;
+    } dw16;
+};
+
+
 
 typedef struct _gen8_avc_mbenc_curbe_data {
     struct {
