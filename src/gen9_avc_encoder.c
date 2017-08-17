@@ -573,11 +573,12 @@ gen9_avc_update_misc_parameters(VADriverContextP ctx,
     generic_state->max_bit_rate = (encoder_context->brc.bits_per_second[0] + 1000 - 1) / 1000;
 
     generic_state->brc_need_reset = encoder_context->brc.need_reset;
-
+    printf("generic_state->mb_brc_enabled %d \n", generic_state->mb_brc_enabled);
     if (generic_state->internal_rate_mode == VA_RC_CBR) {
         generic_state->min_bit_rate = generic_state->max_bit_rate;
         generic_state->mb_brc_enabled = encoder_context->brc.mb_rate_control[0] == 1;
 
+        printf("generic_state->mb_brc_enabled %d \n", generic_state->mb_brc_enabled);
         if (generic_state->target_bit_rate != generic_state->max_bit_rate) {
             generic_state->target_bit_rate = generic_state->max_bit_rate;
             generic_state->brc_need_reset = 1;
@@ -2582,10 +2583,13 @@ gen9_avc_set_curbe_brc_init_reset(VADriverContextP ctx,
         }
 
     }
+    printf("generic_state->mb_brc_enabled %d \n", generic_state->mb_brc_enabled);
     cmd->dw6.frame_rate_m = generic_state->frames_per_100s;
     cmd->dw7.frame_rate_d = 100;
     cmd->dw8.brc_flag = 0;
+    printf("cmd->dw8.brc_flag %d\n", cmd->dw8.brc_flag);
     cmd->dw8.brc_flag |= (generic_state->mb_brc_enabled) ? 0 : 0x8000;
+    printf("cmd->dw8.brc_flag %d\n", cmd->dw8.brc_flag);
 
 
     if (generic_state->internal_rate_mode == VA_RC_CBR) {
@@ -3077,13 +3081,12 @@ gen8_avc_send_surface_brc_frame_update(VADriverContextP ctx,
 
     /* MB statistical data surface*/
 
-    gen9_add_buffer_gpe_surface(ctx,
-                                gpe_context,
-                                &avc_ctx->res_mbbrc_mb_qp_data_surface,
-                                0,
-                                avc_ctx->res_mbbrc_mb_qp_data_surface.size,
-                                0,
-                                GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX);
+    gen9_add_buffer_2d_gpe_surface(ctx,
+                                   gpe_context,
+                                   &avc_ctx->res_mbbrc_mb_qp_data_surface,
+                                   1,
+                                   I965_SURFACEFORMAT_R8_UNORM,
+                                   GEN9_AVC_FRAME_BRC_UPDATE_MB_STATUS_INDEX);
 
     return;
 }
