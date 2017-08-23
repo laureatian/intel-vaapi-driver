@@ -156,18 +156,26 @@ void debug_dump_curbe(VADriverContextP ctx, struct i965_gpe_context *gpe_context
     if (!debug_log_enable) return;
 
     char fname[100];
-    unsigned char * pdata = NULL;
-
+    unsigned int * pdata = NULL;
+    int bo_size = (gpe_context->curbe.bo)->size;
+    int  i = 0;
     if (num > DEBUG_FRAME_NUM_MAX) return;
 
     sprintf(fname, "%s%03d_curbe_%s_%s.bin", path, num, prefix, name);
     if (gpe_context == NULL)return;
-    pdata = (unsigned char *)i965_gpe_context_map_curbe(gpe_context);
+    pdata = (unsigned int*)i965_gpe_context_map_curbe(gpe_context);
     if (pdata == NULL || size == 0)
         return;
 
     FILE* fp_image = fopen(fname, "wb+");
-    fwrite(pdata, 1, size, fp_image);
+
+    for (i = 0; i < bo_size / 4; i ++) {
+        fprintf(fp_image, "%08x ", pdata[i]);
+        if (i % 4 == 3)
+            fprintf(fp_image, "\n");
+    }
+
+//    fwrite(pdata, 1, size, fp_image);
     fclose(fp_image);
     i965_gpe_context_unmap_curbe(gpe_context);
 }
