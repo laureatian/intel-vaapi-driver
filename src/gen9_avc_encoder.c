@@ -54,6 +54,7 @@
 
 
 static int g_debug_enable = 1;
+//static int g_debug_enable = 0;
 #define MAX_URB_SIZE                    4096 /* In register */
 #define NUM_KERNELS_PER_GPE_CONTEXT     1
 #define MBENC_KERNEL_BASE GEN9_AVC_KERNEL_MBENC_QUALITY_I
@@ -3229,7 +3230,7 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
 
         return;
     }
-
+    printf("preset %d\n", preset);
     me_method = (generic_state->frame_type == SLICE_TYPE_B) ? gen9_avc_b_me_method[preset] : gen9_avc_p_me_method[preset];
     qp = pic_param->pic_init_qp + slice_param->slice_qp_delta;
 
@@ -3293,6 +3294,8 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
         }
 
         table_idx = (generic_state->frame_type == SLICE_TYPE_B) ? 1 : 0;
+        printf("table_idx %d\n", table_idx);
+        printf("me_method %d\n", me_method);
         memcpy(&(cmd.g9->dw16), table_enc_search_path[table_idx][me_method], 16 * sizeof(unsigned int));
     }
     cmd.g9->dw4.enable_fbr_bypass = avc_state->fbr_bypass_enable;
@@ -3351,7 +3354,7 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
     }
 
     /*field setting for dw33 34, ignored*/
-
+    printf("avc_state->adaptive_transform_decision_enable %d\n", avc_state->adaptive_transform_decision_enable);
     if (avc_state->adaptive_transform_decision_enable) {
         if (generic_state->frame_type != SLICE_TYPE_I) {
             cmd.g9->dw34.enable_adaptive_tx_decision = 1;
@@ -3363,13 +3366,14 @@ gen9_avc_set_curbe_mbenc(VADriverContextP ctx,
         }
 
         if (is_g9) {
-            if (avc_state->adaptive_transform_decision_enable || avc_state->flatness_check_enable) {
-                cmd.g9->dw58.mb_texture_threshold = 1024;
-            }
             cmd.g9->dw58.tx_decision_threshold = 128;
         }
     }
-
+    if (is_g9) {
+        if (avc_state->adaptive_transform_decision_enable || avc_state->flatness_check_enable) {
+            cmd.g9->dw58.mb_texture_threshold = 1024;
+        }
+    }
 
     if (generic_state->frame_type == SLICE_TYPE_B) {
         cmd.g9->dw34.list1_ref_id0_frm_field_parity = 0; //frame only
@@ -5641,6 +5645,8 @@ gen9_avc_encode_check_parameter(VADriverContextP ctx,
             break;
         case SLICE_TYPE_P:
             avc_state->caf_enable = gen9_avc_all_fractional[preset] & 0x01;
+            printf("gen9_avc_all_fractional[preset] %d \n", gen9_avc_all_fractional[preset]);
+            printf("avc_state->caf_enable %d\n", avc_state->caf_enable);
             break;
         case SLICE_TYPE_B:
             avc_state->caf_enable = (gen9_avc_all_fractional[preset] >> 1) & 0x01;
@@ -5661,7 +5667,7 @@ gen9_avc_encode_check_parameter(VADriverContextP ctx,
     } else {
         avc_state->flatness_check_enable = 0;
     }
-
+    printf("avc_state->flatness_check_enable  %d\n", avc_state->flatness_check_enable);
     /* check mb_status_supported/enbale*/
     if (avc_state->adaptive_transform_decision_enable) {
         avc_state->mb_status_enable = 1;
