@@ -1373,16 +1373,18 @@ gen9_avc_set_curbe_scaling4x(VADriverContextP ctx,
     curbe_cmd->dw1.input_y_bti = GEN9_AVC_SCALING_FRAME_SRC_Y_INDEX;
     curbe_cmd->dw2.output_y_bti = GEN9_AVC_SCALING_FRAME_DST_Y_INDEX;
 
-
-    curbe_cmd->dw5.flatness_threshold = 128;
+    if (surface_param->enable_mb_flatness_check) {
+        curbe_cmd->dw5.flatness_threshold = 128;
+    }
     curbe_cmd->dw6.enable_mb_flatness_check = surface_param->enable_mb_flatness_check;
-    curbe_cmd->dw7.enable_mb_variance_output = surface_param->enable_mb_variance_output;
-    curbe_cmd->dw8.enable_mb_pixel_average_output = surface_param->enable_mb_pixel_average_output;
+    curbe_cmd->dw6.enable_mb_variance_output = surface_param->enable_mb_flatness_check ? true : surface_param->enable_mb_variance_output;
+    curbe_cmd->dw6.enable_mb_pixel_average_output = surface_param->enable_mb_pixel_average_output;
 
+    curbe_cmd->dw8.mbv_proc_stat_bti_top_filed = 4;
     if (curbe_cmd->dw6.enable_mb_flatness_check ||
-        curbe_cmd->dw7.enable_mb_variance_output ||
-        curbe_cmd->dw8.enable_mb_pixel_average_output) {
-        curbe_cmd->dw10.mbv_proc_stat_bti = GEN9_AVC_SCALING_FRAME_MBVPROCSTATS_DST_INDEX;
+        curbe_cmd->dw6.enable_mb_variance_output ||
+        curbe_cmd->dw6.enable_mb_pixel_average_output) {
+        curbe_cmd->dw9.mbv_proc_stat_bti_bottom_field = 5;
     }
 
     i965_gpe_context_unmap_curbe(gpe_context);

@@ -445,11 +445,11 @@ typedef struct _gen9_avc_scaling4x_curbe_data {
     } dw2;
 
     struct {
-        uint32_t reserved;
+        uint32_t intput_ybti_bottom_field;
     } dw3;
 
     struct {
-        uint32_t reserved;
+        uint32_t output_ybti_bottom_field;
     } dw4;
 
     struct {
@@ -458,27 +458,46 @@ typedef struct _gen9_avc_scaling4x_curbe_data {
 
     struct {
         uint32_t enable_mb_flatness_check;
+        uint32_t enable_mb_variance_output;
+        uint32_t enable_mb_pixel_average_output;
+        uint32_t enable_block_8x8_statistics_coutput;
     } dw6;
 
     struct {
-        uint32_t enable_mb_variance_output;
+        uint32_t reserved;
     } dw7;
 
     struct {
-        uint32_t enable_mb_pixel_average_output;
+        uint32_t mbv_proc_stat_bti_top_filed;
     } dw8;
 
     struct {
-        uint32_t reserved;
+        uint32_t mbv_proc_stat_bti_bottom_field;
     } dw9;
 
     struct {
-        uint32_t mbv_proc_stat_bti;
+        uint32_t reserved;
     } dw10;
 
     struct {
         uint32_t reserved;
     } dw11;
+
+    struct {
+        uint32_t reserved;
+    } dw12;
+
+    struct {
+        uint32_t reserved;
+    } dw13;
+
+    struct {
+        uint32_t reserved;
+    } dw14;
+
+    struct {
+        uint32_t reserved;
+    } dw15;
 } gen9_avc_scaling4x_curbe_data;
 
 typedef struct _gen9_avc_scaling2x_curbe_data {
@@ -2322,7 +2341,7 @@ typedef struct _gen95_avc_scaling4x_curbe_data {
     } dw8;
 
     struct {
-        uint32_t reserved;
+        uint32_t mbv_proc_stat_bti_bottom_field;
     } dw9;
 
     struct {
